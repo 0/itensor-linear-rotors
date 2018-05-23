@@ -30,6 +30,12 @@ int main(int argc, char* argv[]) {
     for (auto i : range1(N)) {
         for (auto j : range1(i+1, N)) {
             Real d = R*(j-i);
+#ifdef MINIMAGE
+            // Minimum image convention for periodic boundary conditions.
+            if (j-i > N/2) {
+                d = R*N - d;
+            }
+#endif // MINIMAGE
             Real k = 1.0/(d*d*d);
 
             add_operator(ampo, LinearRigidRotorSite::compound_op2("D-D lin"), i, j, k);

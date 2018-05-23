@@ -49,6 +49,8 @@ public:
 };
 
 
+void add_operator(itensor::AutoMPO& ampo, OneSiteOperator op, int i, itensor::Cplx k);
+
 void add_operator(itensor::AutoMPO& ampo, TwoSiteOperator op, int i, int j, itensor::Cplx k);
 
 #endif // __LINROT_OPERATORS_H

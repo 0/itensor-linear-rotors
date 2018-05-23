@@ -7,8 +7,8 @@ using namespace itensor;
 
 
 int main(int argc, char* argv[]) {
-    if (argc != 5) {
-        printfln("usage: %s <R> <N> <l_max> <N_sweeps>", argv[0]);
+    if (argc != 6) {
+        printfln("usage: %s <R> <N> <l_max> <sweep_table> <N_sweeps>", argv[0]);
 
         return 1;
     }
@@ -16,7 +16,8 @@ int main(int argc, char* argv[]) {
     Real R = atof(argv[1]);
     int N = atoi(argv[2]);
     int l_max = atoi(argv[3]);
-    int N_sweeps = atoi(argv[4]);
+    auto sweep_table = InputGroup(argv[4], "sweeps");
+    int N_sweeps = atoi(argv[5]);
 
     auto sites = LinearRigidRotor(N, {"l_max", l_max});
 
@@ -43,11 +44,7 @@ int main(int argc, char* argv[]) {
     }
     auto psi = IQMPS(state);
 
-    auto sweeps = Sweeps(N_sweeps);
-    sweeps.maxm() = 10, 20, 100, 100, 200, 400, 800;
-    sweeps.cutoff() = 1e-10;
-    sweeps.niter() = 2;
-    sweeps.noise() = 1e-7, 1e-8, 0.0;
+    auto sweeps = Sweeps(N_sweeps, sweep_table);
     println();
     println(sweeps);
 

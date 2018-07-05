@@ -199,7 +199,7 @@ public:
     static OneSiteOperator compound_op1(std::string const& opname) {
         OneSiteOperator Op;
 
-        if (opname == "B0") {
+        if (opname == "B0" || opname == "z") {
             Op.add_term(1.0, "L+");
             Op.add_term(1.0, "L-");
         } else if (opname == "B+") {

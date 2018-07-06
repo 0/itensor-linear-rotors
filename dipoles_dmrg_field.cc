@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
     auto H = toMPO<IQTensor>(ampo, {"Cutoff=", 1e-40});
     printfln("mean MPO bond dimension: %f", averageM(H));
 
-    run_dmrg(sites, ampo, N, N_sweeps, sweep_table, H);
+    run_dmrg(sites, N, N_sweeps, sweep_table, H);
 
     return 0;
 }

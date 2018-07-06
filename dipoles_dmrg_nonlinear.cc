@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
 
     delete[] geom;
 
-    run_dmrg(sites, ampo, N, N_sweeps, sweep_table, H);
+    run_dmrg(sites, N, N_sweeps, sweep_table, H);
 
     return 0;
 }

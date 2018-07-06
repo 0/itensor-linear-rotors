@@ -1,7 +1,7 @@
 #include "dmrg.h"
 
 
-void run_dmrg(SiteSet const& sites, AutoMPO const& ampo, int N, int N_sweeps, InputGroup& sweep_table, IQMPO const& H) {
+void run_dmrg(SiteSet const& sites, int N, int N_sweeps, InputGroup& sweep_table, IQMPO const& H) {
     auto state = InitState(sites);
     for (auto i : range1(N)) {
         state.set(i, "l0m0");

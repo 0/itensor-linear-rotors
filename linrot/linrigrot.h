@@ -2,6 +2,7 @@
 #define __LINROT_LINRIGROT_H
 
 #include "itensor/mps/siteset.h"
+#include "itensor/util/error.h"
 #include "operators.h"
 
 

@@ -14,6 +14,11 @@ clean:
 	rm -rf $(OBJECTS) $(BINARIES)
 
 
+linrot/operators.o: linrot/operators.cc linrot/operators.h
+
+dmrg.o: dmrg.cc dmrg.h linrot/linrigrot.h linrot/operators.h
+
+
 dipoles_dmrg: dipoles_dmrg.cc $(OBJECTS)
 
 dipoles_dmrg_field: dipoles_dmrg_field.cc $(OBJECTS)

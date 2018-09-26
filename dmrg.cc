@@ -2,7 +2,7 @@
 #include "dmrg.h"
 
 
-void run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_min, int sweeps_max, IQMPO const& H, Real dH2_goal) {
+IQMPS run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_min, int sweeps_max, IQMPO const& H, Real dH2_goal) {
     if (sweeps_min > sweeps_max) {
         Error("sweeps_min must not exceed sweeps_max");
     }
@@ -110,4 +110,6 @@ void run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_m
     }
 
     delete[] corr;
+
+    return psi;
 }

@@ -1,6 +1,5 @@
 /*.o
 /linrot/*.o
 
-/dipoles_dmrg
-/dipoles_dmrg_field
-/dipoles_dmrg_nonlinear
+/bin/*
+!/bin/*.cc

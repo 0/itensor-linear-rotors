@@ -50,6 +50,7 @@ int main(int argc, char* argv[]) {
     printfln("mean MPO bond dimension: %f", averageM(H));
 
     auto psi = run_dmrg(sites, N, sweep_table, sweeps_min, sweeps_max, H, dH2_goal);
+    run_analysis(psi);
     run_sampling(psi, l_max, num_samples);
 
     return 0;

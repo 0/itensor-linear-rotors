@@ -33,6 +33,13 @@ IQMPS run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_
         printfln("S2(%04d) = %.15f", i, obs.S2(i));
     }
 
+    return psi;
+}
+
+void run_analysis(IQMPS& psi) {
+    int N = psi.N();
+    auto sites = psi.sites();
+
     // Orientational correlation.
     auto OC_ampo = AutoMPO(sites);
     for (auto i : range1(N)) {
@@ -110,8 +117,6 @@ IQMPS run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_
     }
 
     delete[] corr;
-
-    return psi;
 }
 
 void dump_probabilities(IQMPS const& psi, int l_max) {

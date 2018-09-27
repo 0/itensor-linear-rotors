@@ -58,7 +58,8 @@ int main(int argc, char* argv[]) {
 
     delete[] geom;
 
-    run_dmrg(sites, N, sweep_table, sweeps_min, sweeps_max, H, dH2_goal);
+    auto psi = run_dmrg(sites, N, sweep_table, sweeps_min, sweeps_max, H, dH2_goal);
+    run_analysis(psi);
 
     return 0;
 }

@@ -113,3 +113,91 @@ IQMPS run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_
 
     return psi;
 }
+
+void dump_probabilities(IQMPS const& psi, int l_max) {
+    int N = psi.N();
+    auto sites = psi.sites();
+
+    // Start with {0, 1, 1, ..., 1, 1}.
+    std::vector<int> conf(N);
+    for (auto i : range1(2, N)) {
+        conf[i-1]++;
+    }
+
+    for (;;) {
+        bool done = false;
+        for (auto i : range1(N)) {
+            conf[i-1]++;
+            if (conf[i-1] <= sites(i).m()) {
+                break;
+            } else {
+                if (i == N) {
+                    done = true;
+                } else {
+                    conf[i-1] = 1;
+                }
+            }
+        }
+        if (done) break;
+
+        auto tensor = dag(setElt(sites(1)(conf[0]))) * psi.A(1);
+        for (auto i : range1(2, N)) {
+            tensor *= dag(setElt(sites(i)(conf[i-1]))) * psi.A(i);
+        }
+        auto prob = tensor.real() * tensor.real();
+
+        // Only output configurations that have sufficient probability.
+        if (prob < 1e-12) continue;
+
+        print("probability: ");
+        for (auto n : conf) {
+            print(LinearRigidRotorSite::state_label(l_max, n), " ");
+        }
+        printfln("%.15f", prob);
+    }
+}
+
+void run_sampling(IQMPS& psi, int l_max, int num_samples) {
+    int N = psi.N();
+    auto sites = psi.sites();
+
+    std::random_device rd;
+    std::mt19937 rng(rd());
+
+    IQTensor cap;
+
+    // Move the orthogonality center all the way to the first site so that the
+    // other sites can be ignored when contracting.
+    psi.position(1);
+
+    for (auto sample_idx : range1(num_samples)) {
+        std::vector<int> sample(N);
+
+        for (auto i : range1(N)) {
+            auto tensor = i == 1 ? psi.A(i) : cap * psi.A(i);
+            auto rho = prime(dag(tensor), Site) * tensor;
+            auto I = sites(i);
+            auto Ip = prime(I);
+
+            // Compute the weights of the outcomes. The first weight is a dummy
+            // for indexing and should always remain zero.
+            std::vector<Real> weights(I.m()+1);
+            for (auto idx : range1(I.m())) {
+                weights[idx] = rho.real(I(idx), Ip(idx));
+            }
+
+            // Sample.
+            std::discrete_distribution<> d(weights.begin(), weights.end());
+            sample[i-1] = d(rng);
+
+            // Add site to cap.
+            cap = dag(setElt(I(sample[i-1]))) * tensor;
+        }
+
+        print("sample ", sample_idx, ": ");
+        for (auto n : sample) {
+            print(LinearRigidRotorSite::state_label(l_max, n), " ");
+        }
+        println();
+    }
+}

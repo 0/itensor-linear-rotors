@@ -1,6 +1,8 @@
 #ifndef __LINROT_LINRIGROT_H
 #define __LINROT_LINRIGROT_H
 
+#include <map>
+
 #include "itensor/mps/siteset.h"
 #include "itensor/util/error.h"
 #include "operators.h"
@@ -12,6 +14,8 @@ using LinearRigidRotor = itensor::BasicSiteSet<LinearRigidRotorSite>;
 
 
 class LinearRigidRotorSite {
+    static std::map<int,std::map<int,std::string> > state_map;
+
     int l_max;
     bool lp_sym;
     bool m_sym;
@@ -100,6 +104,17 @@ public:
         }
 
         s = itensor::IQIndex{itensor::nameint("rotor site=", n), std::move(iq)};
+
+        // Populate state map.
+        if (state_map.count(l_max) == 0) {
+            for (int l = 0; l <= l_max; l++) {
+                for (int m = -l; m <= l; m++) {
+                    std::ostringstream oss;
+                    oss << 'l' << l << 'm' << m;
+                    state_map[l_max][basis_idx(l, m)] = oss.str();
+                }
+            }
+        }
     }
 
     itensor::IQIndex index() const {
@@ -255,6 +270,10 @@ public:
         }
 
         return Op;
+    }
+
+    static std::string state_label(int l_max, int idx) {
+        return state_map.at(l_max).at(idx);
     }
 };
 

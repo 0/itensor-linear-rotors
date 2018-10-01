@@ -2,7 +2,7 @@ CXX=$(ITENSOR_CXX)
 CXXFLAGS=$(ITENSOR_CXXFLAGS) -I. -Wall -pedantic
 LDLIBS=$(ITENSOR_LDLIBS)
 
-OBJECTS=linrot/operators.o dmrg.o
+OBJECTS=linrot/linrigrot.o linrot/operators.o dmrg.o
 
 SOURCES=$(wildcard bin/*.cc)
 BINARIES=$(SOURCES:.cc=)
@@ -15,6 +15,8 @@ all: $(BINARIES)
 clean:
 	rm -rf $(OBJECTS) $(BINARIES)
 
+
+linrot/linrigrot.o: linrot/linrigrot.cc linrot/linrigrot.h
 
 linrot/operators.o: linrot/operators.cc linrot/operators.h
 

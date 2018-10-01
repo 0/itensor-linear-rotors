@@ -9,8 +9,8 @@ using namespace itensor;
 
 
 int main(int argc, char* argv[]) {
-    if (argc != 6) {
-        printfln("usage: %s <R> <N> <l_max> <sweep_table> <N_sweeps>", argv[0]);
+    if (argc != 8) {
+        printfln("usage: %s <R> <N> <l_max> <sweep_table> <dH2_goal> <sweeps_min> <sweeps_max>", argv[0]);
 
         return 1;
     }
@@ -19,7 +19,9 @@ int main(int argc, char* argv[]) {
     int N = atoi(argv[2]);
     int l_max = atoi(argv[3]);
     auto sweep_table = InputGroup(argv[4], "sweeps");
-    int N_sweeps = atoi(argv[5]);
+    Real dH2_goal = atof(argv[5]);
+    int sweeps_min = atoi(argv[6]);
+    int sweeps_max = atoi(argv[7]);
 
     auto sites = LinearRigidRotor(N, {"l_max", l_max});
 
@@ -46,7 +48,7 @@ int main(int argc, char* argv[]) {
     auto H = toMPO<IQTensor>(ampo, {"Cutoff=", 1e-40});
     printfln("mean MPO bond dimension: %f", averageM(H));
 
-    run_dmrg(sites, N, N_sweeps, sweep_table, H);
+    run_dmrg(sites, N, sweep_table, sweeps_min, sweeps_max, H, dH2_goal);
 
     return 0;
 }

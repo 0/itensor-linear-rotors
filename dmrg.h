@@ -7,6 +7,6 @@
 using namespace itensor;
 
 
-void run_dmrg(SiteSet const& sites, int N, int N_sweeps, InputGroup& sweep_table, IQMPO const& H);
+void run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_min, int sweeps_max, IQMPO const& H, Real dH2_goal);
 
 #endif // __LINROT_DMRG_H

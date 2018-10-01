@@ -16,7 +16,7 @@ clean:
 
 linrot/operators.o: linrot/operators.cc linrot/operators.h
 
-dmrg.o: dmrg.cc dmrg.h linrot/linrigrot.h linrot/operators.h
+dmrg.o: dmrg.cc dmrg.h linrot/linrigrot.h linrot/operators.h observer.h
 
 
 dipoles_dmrg: dipoles_dmrg.cc $(OBJECTS)

@@ -1,47 +1,37 @@
+#include "observer.h"
 #include "dmrg.h"
 
 
-void run_dmrg(SiteSet const& sites, int N, int N_sweeps, InputGroup& sweep_table, IQMPO const& H) {
+void run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_min, int sweeps_max, IQMPO const& H, Real dH2_goal) {
+    if (sweeps_min > sweeps_max) {
+        Error("sweeps_min must not exceed sweeps_max");
+    }
+
     auto state = InitState(sites);
     for (auto i : range1(N)) {
         state.set(i, "l0m0");
     }
     auto psi = IQMPS(state);
 
-    auto sweeps = Sweeps(N_sweeps, sweep_table);
+    auto sweeps = Sweeps(sweeps_max, sweep_table);
     println();
     println(sweeps);
 
-    auto energy = dmrg(psi, H, sweeps, "Quiet");
+    auto obs = LinRotObserver<IQTensor>(psi, H, sweeps_min, sweeps_max, dH2_goal);
+
+    auto energy = dmrg(psi, H, sweeps, obs, "Quiet");
 
     println();
     printfln("E0 = %.15f", energy);
-
-    auto dH2 = N*(overlap(psi, H, H, psi)/(energy*energy) - 1.0);
-    printfln("dH2 = %.15f", dH2);
+    printfln("dH2 = %.15f", obs.dH2());
 
     // Entanglement entropy.
-    psi.position(N/2);
-    auto wf = psi.A(N/2)*psi.A(N/2+1);
-    auto U = psi.A(N/2);
-
-    IQTensor S, V;
-    auto spectrum = svd(wf, U, S, V);
-
-    Real SvN = 0.0;
-    Real S2 = 0.0;
-    for(auto p : spectrum.eigs()) {
-        if(p < 1e-12) {
-            continue;
-        }
-
-        SvN += -p*log(p);
-        S2 += p*p;
+    for (auto i : range1(N/2)) {
+        printfln("SvN(%04d) = %.15f", i, obs.SvN(i));
     }
-    S2 = -log(S2);
-
-    printfln("SvN = %.15f", SvN);
-    printfln("S2 = %.15f", S2);
+    for (auto i : range1(N/2)) {
+        printfln("S2(%04d) = %.15f", i, obs.S2(i));
+    }
 
     // Orientational correlation.
     auto OC_ampo = AutoMPO(sites);

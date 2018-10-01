@@ -8,11 +8,6 @@
 #include "operators.h"
 
 
-class LinearRigidRotorSite;
-
-using LinearRigidRotor = itensor::BasicSiteSet<LinearRigidRotorSite>;
-
-
 class LinearRigidRotorSite {
     static std::map<int,std::map<int,std::string> > state_map;
 
@@ -63,14 +58,24 @@ protected:
         }
     }
 
-public:
-    LinearRigidRotorSite(int n, itensor::Args const& args = itensor::Args::global()) {
-        l_max = args.getInt("l_max");
+    void set_args(itensor::Args const& args) {
+        // The default value (-1) is only used temporarily when reading the
+        // sites from a file.
+        l_max = args.getInt("l_max", -1);
         lp_sym = args.getBool("lp_sym", true);
         m_sym = args.getBool("m_sym", lp_sym);
         if (!lp_sym && m_sym) {
             itensor::Error("m_sym not allowed without lp_sym");
         }
+    }
+
+public:
+    LinearRigidRotorSite(itensor::IQIndex s, itensor::Args const& args = itensor::Args::global()) : s(s) {
+        set_args(args);
+    }
+
+    LinearRigidRotorSite(int n, itensor::Args const& args = itensor::Args::global()) {
+        set_args(args);
 
         std::vector<itensor::IndexQN> iq;
 
@@ -274,6 +279,26 @@ public:
 
     static std::string state_label(int l_max, int idx) {
         return state_map.at(l_max).at(idx);
+    }
+};
+
+
+using PreLinearRigidRotor = itensor::BasicSiteSet<LinearRigidRotorSite>;
+
+class LinearRigidRotor : public PreLinearRigidRotor {
+public:
+    using PreLinearRigidRotor::PreLinearRigidRotor;
+
+    LinearRigidRotor(std::string path, int N, itensor::Args const& args = itensor::Args::global()) {
+        auto other = LinearRigidRotor(N, args);
+        readFromFile(path, other);
+
+        auto sites = itensor::SiteStore(N);
+        for (auto i : itensor::range1(N)) {
+            sites.set(i, LinearRigidRotorSite(other(i), args));
+        }
+
+        LinearRigidRotor::init(std::move(sites));
     }
 };
 

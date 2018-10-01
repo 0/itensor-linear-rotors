@@ -17,6 +17,9 @@ void run_dmrg(SiteSet const& sites, AutoMPO const& ampo, int N, int N_sweeps, In
     println();
     printfln("E0 = %.15f", energy);
 
+    auto dH2 = N*(overlap(psi, H, H, psi)/(energy*energy) - 1.0);
+    printfln("dH2 = %.15f", dH2);
+
     // Entanglement entropy.
     psi.position(N/2);
     auto wf = psi.A(N/2)*psi.A(N/2+1);

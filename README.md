@@ -3,6 +3,26 @@
 An [ITensor](http://itensor.org/) [`SiteSet`](http://itensor.org/docs.cgi?page=classes/siteset) for linear rotors.
 
 
+## Examples
+
+* `bin/dipoles_dmrg 1.0 4 3 data/sample_sweep_table 2e-4 5 20`
+
+---
+
+* `bin/dipoles_dmrg_write 1.0 4 3 data/sample_sweep_table 2e-4 5 20 sites H mps`
+* `bin/dipoles_dmrg_read 4 3 sites H mps`
+
+---
+
+* `bin/dipoles_dmrg_probabilities 1.0 3 3 data/sample_sweep_table 2e-4 5 20`
+* `bin/dipoles_dmrg_sampling 1.0 3 3 data/sample_sweep_table 2e-4 5 20 100`
+
+---
+
+* `bin/dipoles_dmrg_field 1.0 4 0.02 3 data/sample_sweep_table 2e-4 5 20`
+* `bin/dipoles_dmrg_nonlinear data/geom_tetrahedron 1.5 4 2 data/sample_sweep_table 2e-4 5 20`
+
+
 ## Publications
 
 The following publications contain data created using this package:

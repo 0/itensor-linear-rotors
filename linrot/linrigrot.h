@@ -103,7 +103,7 @@ public:
                         if (size == 0) continue;
 
                         iq.push_back(itensor::IndexQN(itensor::Index(itensor::format("lp%dm%d:site%d", lp, m, n), size, itensor::Site),
-                                     itensor::QN({lp, 2}, {m, 1})));
+                                                      itensor::QN({lp, 2}, {m, 1})));
                     }
                 } else {
                     int size = 2*((l_max+lp)/2)*((l_max+lp)/2+1) + (2*lp+1)*((l_max+lp)/2+1);
@@ -111,14 +111,14 @@ public:
                     if (size == 0) continue;
 
                     iq.push_back(itensor::IndexQN(itensor::Index(itensor::format("lp%d:site%d", lp, n), size, itensor::Site),
-                                 itensor::QN({lp, 2})));
+                                                  itensor::QN({lp, 2})));
                 }
             }
         } else {
             int size = (l_max+1)*(l_max+1);
 
             iq.push_back(itensor::IndexQN(itensor::Index(itensor::format(":site%d", n), size, itensor::Site),
-                         itensor::QN()));
+                                          itensor::QN()));
         }
 
         s = itensor::IQIndex{itensor::nameint("rotor site=", n), std::move(iq)};

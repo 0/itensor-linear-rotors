@@ -25,6 +25,11 @@ IQMPS run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_
     printfln("E0 = %.15f", energy);
     printfln("dH2 = %.15f", obs.dH2());
 
+    // Entanglement spectrum at middle bond.
+    for (auto lambda : obs.middle_eigs()) {
+        printfln("lambda = %.15f", lambda);
+    }
+
     // Entanglement entropy.
     for (auto i : range1(N/2)) {
         printfln("SvN(%04d) = %.15f", i, obs.SvN(i));

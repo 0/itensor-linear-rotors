@@ -19,6 +19,7 @@ class LinRotObserver : public itensor::DMRGObserver<Tensor> {
 
     int max_num_eigs;
 
+    std::vector<itensor::Real> middle_eigs_;
     std::vector<itensor::Real> SvNs;
     std::vector<itensor::Real> S2s;
     std::vector<itensor::Real> Sinfs;
@@ -37,6 +38,7 @@ public:
               dH2_goal(dH2_goal),
               dH2_(std::numeric_limits<itensor::Real>::infinity()),
               max_num_eigs(-1),
+              middle_eigs_(16),
               SvNs(psi.N()-1),
               S2s(psi.N()-1),
               Sinfs(psi.N()-1)
@@ -44,6 +46,10 @@ public:
 
     itensor::Real dH2() {
         return dH2_;
+    }
+
+    std::vector<itensor::Real> middle_eigs() {
+        return middle_eigs_;
     }
 
     itensor::Real SvN(int i) {
@@ -72,6 +78,18 @@ public:
 
         // First half-sweep.
         if (ha == 1) return;
+
+        if (b == N/2) {
+            // Middle of second half-sweep.
+            std::vector<itensor::Real>::size_type idx = 0;
+            for (auto p : spectrum.eigsKept()) {
+                middle_eigs_[idx] = p;
+                if (++idx >= middle_eigs_.size()) break;
+            }
+            for (; idx < middle_eigs_.size(); idx++) {
+                middle_eigs_[idx] = 0.0;
+            }
+        }
 
         itensor::Real SvN_ = 0.0;
         itensor::Real S2_ = 0.0;

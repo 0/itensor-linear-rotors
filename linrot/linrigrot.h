@@ -69,9 +69,22 @@ protected:
         }
     }
 
+    void populate_state_map() {
+        if (state_map.count(l_max) == 0) {
+            for (int l = 0; l <= l_max; l++) {
+                for (int m = -l; m <= l; m++) {
+                    std::ostringstream oss;
+                    oss << 'l' << l << 'm' << m;
+                    state_map[l_max][basis_idx(l, m)] = oss.str();
+                }
+            }
+        }
+    }
+
 public:
     LinearRigidRotorSite(itensor::IQIndex s, itensor::Args const& args = itensor::Args::global()) : s(s) {
         set_args(args);
+        populate_state_map();
     }
 
     LinearRigidRotorSite(int n, itensor::Args const& args = itensor::Args::global()) {
@@ -110,16 +123,7 @@ public:
 
         s = itensor::IQIndex{itensor::nameint("rotor site=", n), std::move(iq)};
 
-        // Populate state map.
-        if (state_map.count(l_max) == 0) {
-            for (int l = 0; l <= l_max; l++) {
-                for (int m = -l; m <= l; m++) {
-                    std::ostringstream oss;
-                    oss << 'l' << l << 'm' << m;
-                    state_map[l_max][basis_idx(l, m)] = oss.str();
-                }
-            }
-        }
+        populate_state_map();
     }
 
     itensor::IQIndex index() const {

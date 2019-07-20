@@ -44,7 +44,7 @@ IQMPS run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_
     return psi;
 }
 
-void spatial_correlation(IQMPS& psi) {
+void spatial_correlation(IQMPS& psi, std::string op1_name, std::string op2_name) {
     int N = psi.N();
     auto sites = psi.sites();
 
@@ -56,8 +56,8 @@ void spatial_correlation(IQMPS& psi) {
         }
     }
 
-    for (const auto& term_i : LinearRigidRotorSite::compound_op1("z")) {
-        for (const auto& term_j : LinearRigidRotorSite::compound_op1("z")) {
+    for (const auto& term_i : LinearRigidRotorSite::compound_op1(op1_name)) {
+        for (const auto& term_j : LinearRigidRotorSite::compound_op1(op2_name)) {
             for (auto i : range1(N)) {
                 psi.position(i);
 
@@ -108,7 +108,86 @@ void spatial_correlation(IQMPS& psi) {
 
     for (auto i : range1(N)) {
         for (auto j : range1(i, N)) {
-            printfln("<z%04d z%04d> = %.15f", i, j, corr[N*(i-1)+(j-1)]);
+            printfln("<%s%04d %s%04d> = %.15f", op1_name, i, op2_name, j, corr[N*(i-1)+(j-1)]);
+        }
+    }
+
+    delete[] corr;
+}
+
+void spatial_correlation2(IQMPS& psi, std::string op1a_name, std::string op1b_name, std::string op2a_name, std::string op2b_name) {
+    int N = psi.N();
+    auto sites = psi.sites();
+
+    Real *corr = new Real[N*N];
+
+    for (auto i : range1(N)) {
+        for (auto j : range1(i, N)) {
+            corr[N*(i-1)+(j-1)] = 0.0;
+        }
+    }
+
+    for (const auto& term_ia : LinearRigidRotorSite::compound_op1(op1a_name)) {
+        for (const auto& term_ib : LinearRigidRotorSite::compound_op1(op1b_name)) {
+            for (const auto& term_ja : LinearRigidRotorSite::compound_op1(op2a_name)) {
+                for (const auto& term_jb : LinearRigidRotorSite::compound_op1(op2b_name)) {
+                    for (auto i : range1(N)) {
+                        psi.position(i);
+
+                        auto op_ia = sites.op(term_ia.op, i);
+                        auto op_ib = sites.op(term_ib.op, i);
+
+                        // Diagonal.
+                        {
+                            auto op_i1a = op_ia;
+                            auto op_i1b = op_ib;
+                            auto op_i2a = sites.op(term_ja.op, i);
+                            auto op_i2b = sites.op(term_jb.op, i);
+
+                            auto C = psi.A(i) * op_i1a * prime(op_i1b) * prime(op_i2a, 2) * prime(op_i2b, 3) * dag(prime(psi.A(i), Site, 4));
+                            auto zz = term_ia.k * term_ib.k * term_ja.k * term_jb.k * C.cplx();
+
+                            if (std::abs(zz.imag()) > 1e-12) {
+                                println("WARNING: Complex correlation!");
+                            }
+
+                            corr[(N+1)*(i-1)] += zz.real();
+                        }
+
+                        // Off-diagonal.
+                        auto idx = commonIndex(psi.A(i), psi.A(i+1), Link);
+                        auto C = psi.A(i) * op_ia * prime(op_ib) * dag(prime(prime(psi.A(i), Site, 2), idx, 1));
+
+                        for (auto j : range1(i+1, N)) {
+                            auto op_ja = sites.op(term_ja.op, j);
+                            auto op_jb = sites.op(term_jb.op, j);
+
+                            if (j-1 > i) {
+                                C *= psi.A(j-1);
+                                C *= dag(prime(psi.A(j-1), Link));
+                            }
+
+                            auto D = C * psi.A(j);
+                            D *= op_ja * prime(op_jb);
+                            auto idx = commonIndex(psi.A(j), psi.A(j-1), Link);
+                            D *= dag(prime(prime(psi.A(j), Site, 2), idx, 1));
+                            auto zz = term_ia.k * term_ib.k * term_ja.k * term_jb.k * D.cplx();
+
+                            if (std::abs(zz.imag()) > 1e-12) {
+                                println("WARNING: Complex correlation!");
+                            }
+
+                            corr[N*(i-1)+(j-1)] += zz.real();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (auto i : range1(N)) {
+        for (auto j : range1(i, N)) {
+            printfln("<%s%04d %s%04d %s%04d %s%04d> = %.15f", op1a_name, i, op1b_name, i, op2a_name, j, op2b_name, j, corr[N*(i-1)+(j-1)]);
         }
     }
 
@@ -131,7 +210,9 @@ void run_analysis(IQMPS& psi) {
     printfln("orientational correlation = %.15f", overlap(psi, OC, psi)*2.0/(N*(N-1)));
 
     // Spatial correlations.
-    spatial_correlation(psi);
+    spatial_correlation(psi, "x", "x");
+    spatial_correlation(psi, "z", "z");
+    spatial_correlation2(psi, "z", "z", "z", "z");
 }
 
 void dump_probabilities(IQMPS const& psi, int l_max) {

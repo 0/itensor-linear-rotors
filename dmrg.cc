@@ -44,22 +44,10 @@ IQMPS run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_
     return psi;
 }
 
-void run_analysis(IQMPS& psi) {
+void spatial_correlation(IQMPS& psi) {
     int N = psi.N();
     auto sites = psi.sites();
 
-    // Orientational correlation.
-    auto OC_ampo = AutoMPO(sites);
-    for (auto i : range1(N)) {
-        for (auto j : range1(i+1, N)) {
-            add_operator(OC_ampo, LinearRigidRotorSite::compound_op2("dot product"), i, j, 1.0);
-        }
-    }
-    auto OC = toMPO<IQTensor>(OC_ampo, {"Cutoff=", 1e-40});
-
-    printfln("orientational correlation = %.15f", overlap(psi, OC, psi)*2.0/(N*(N-1)));
-
-    // Spatial correlations.
     Real *corr = new Real[N*N];
 
     for (auto i : range1(N)) {
@@ -125,6 +113,25 @@ void run_analysis(IQMPS& psi) {
     }
 
     delete[] corr;
+}
+
+void run_analysis(IQMPS& psi) {
+    int N = psi.N();
+    auto sites = psi.sites();
+
+    // Orientational correlation.
+    auto OC_ampo = AutoMPO(sites);
+    for (auto i : range1(N)) {
+        for (auto j : range1(i+1, N)) {
+            add_operator(OC_ampo, LinearRigidRotorSite::compound_op2("dot product"), i, j, 1.0);
+        }
+    }
+    auto OC = toMPO<IQTensor>(OC_ampo, {"Cutoff=", 1e-40});
+
+    printfln("orientational correlation = %.15f", overlap(psi, OC, psi)*2.0/(N*(N-1)));
+
+    // Spatial correlations.
+    spatial_correlation(psi);
 }
 
 void dump_probabilities(IQMPS const& psi, int l_max) {

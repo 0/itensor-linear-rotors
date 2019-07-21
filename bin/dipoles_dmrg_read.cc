@@ -9,19 +9,17 @@ using namespace itensor;
 
 
 int main(int argc, char* argv[]) {
-    if (argc != 6) {
-        printfln("usage: %s <N> <l_max> <sites_path> <H_path> <mps_path>", argv[0]);
+    if (argc != 4) {
+        printfln("usage: %s <sites_path> <H_path> <mps_path>", argv[0]);
 
         return 1;
     }
 
-    int N = atoi(argv[1]);
-    int l_max = atoi(argv[2]);
-    std::string sites_path = argv[3];
-    std::string H_path = argv[4];
-    std::string mps_path = argv[5];
+    std::string sites_path = argv[1];
+    std::string H_path = argv[2];
+    std::string mps_path = argv[3];
 
-    auto sites = LinearRigidRotor(sites_path, N, {"l_max", l_max});
+    auto sites = readFromFile<LinearRigidRotor>(sites_path);
     auto H = readFromFile<IQMPO>(H_path, sites);
     auto psi = readFromFile<IQMPS>(mps_path, sites);
 

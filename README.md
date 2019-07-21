@@ -10,7 +10,7 @@ An [ITensor](http://itensor.org/) [`SiteSet`](http://itensor.org/docs.cgi?page=c
 ---
 
 * `bin/dipoles_dmrg_write 1.0 4 3 data/sample_sweep_table 2e-4 5 20 sites H mps`
-* `bin/dipoles_dmrg_read 4 3 sites H mps`
+* `bin/dipoles_dmrg_read sites H mps`
 
 ---
 

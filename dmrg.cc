@@ -123,7 +123,7 @@ void spatial_correlation(IQMPS& psi, std::string op1_name, std::string op2_name)
                     auto zz = term_i.k * term_j.k * C.cplx();
 
                     if (std::abs(zz.imag()) > 1e-12) {
-                        println("WARNING: Complex correlation!");
+                        printfln("WARNING: Complex correlation (%.15f)", zz.imag());
                     }
 
                     corr[(N+1)*(i-1)] += zz.real();
@@ -148,7 +148,7 @@ void spatial_correlation(IQMPS& psi, std::string op1_name, std::string op2_name)
                     auto zz = term_i.k * term_j.k * D.cplx();
 
                     if (std::abs(zz.imag()) > 1e-12) {
-                        println("WARNING: Complex correlation!");
+                        printfln("WARNING: Complex correlation (%.15f)", zz.imag());
                     }
 
                     corr[N*(i-1)+(j-1)] += zz.real();
@@ -199,7 +199,7 @@ void spatial_correlation2(IQMPS& psi, std::string op1a_name, std::string op1b_na
                             auto zz = term_ia.k * term_ib.k * term_ja.k * term_jb.k * C.cplx();
 
                             if (std::abs(zz.imag()) > 1e-12) {
-                                println("WARNING: Complex correlation!");
+                                printfln("WARNING: Complex correlation (%.15f)", zz.imag());
                             }
 
                             corr[(N+1)*(i-1)] += zz.real();
@@ -225,7 +225,7 @@ void spatial_correlation2(IQMPS& psi, std::string op1a_name, std::string op1b_na
                             auto zz = term_ia.k * term_ib.k * term_ja.k * term_jb.k * D.cplx();
 
                             if (std::abs(zz.imag()) > 1e-12) {
-                                println("WARNING: Complex correlation!");
+                                printfln("WARNING: Complex correlation (%.15f)", zz.imag());
                             }
 
                             corr[N*(i-1)+(j-1)] += zz.real();

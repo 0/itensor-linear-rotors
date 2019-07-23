@@ -124,11 +124,11 @@ public:
             H2_contraction *= dag(prime(psi.A(1), 2));
 
             if (std::abs(H2_contraction.cplx().imag()) > 1e-12) {
-                itensor::println("WARNING: Complex H2!");
+                itensor::printfln("WARNING: Complex H2 (%.15f)", H2_contraction.cplx().imag());
             } else if (H2_contraction.real() < 0.0) {
-                itensor::println("WARNING: Negative H2!");
+                itensor::printfln("WARNING: Negative H2 (%.15f)", H2_contraction.real());
             } else if (H2_contraction.real() < energy*energy) {
-                itensor::println("WARNING: H2 less than E^2!");
+                itensor::printfln("WARNING: H2 less than E^2 (%.15f < %.15f)", H2_contraction.real(), energy*energy);
             }
 
             dH2_ = N*(H2_contraction.real()/(energy*energy) - 1.0);
@@ -145,7 +145,7 @@ public:
         done |= sw >= nsweep;
 
         if (done && max_num_eigs >= maxm) {
-            itensor::println("WARNING: maxm reached on final sweep!");
+            itensor::println("WARNING: maxm reached on final sweep");
         }
 
         return done;

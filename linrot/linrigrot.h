@@ -252,26 +252,27 @@ public:
             Op.add_term(0.5, "B-", "B+");
             Op.add_term(0.5, "B+", "B-");
         } else if (opname == "D-D lin") {
-            Op.add_term(-2.0, "B0", "B0");
+            auto a = args.getReal("a", -3.0);
+            Op.add_term(1.0+a, "B0", "B0");
             Op.add_term(0.5, "B-", "B+");
             Op.add_term(0.5, "B+", "B-");
         } else if (opname == "D-D") {
+            auto a = args.getReal("a", -3.0);
             auto rx = args.getReal("rx");
             auto ry = args.getReal("ry");
             auto rz = args.getReal("rz");
             auto rz2 = rz*rz;
             auto rperp = itensor::Cplx(rx, ry);
             auto rperpc = std::conj(rperp);
-
-            Op.add_term(1-3*rz2, "B0", "B0");
-            Op.add_term(-0.25*(1-3*rz2), "B-", "B+");
-            Op.add_term(-0.25*(1-3*rz2), "B+", "B-");
-            Op.add_term(-0.75*rperp*rperp, "B-", "B-");
-            Op.add_term(-0.75*rperpc*rperpc, "B+", "B+");
-            Op.add_term(-1.5*rperp*rz, "B-", "B0");
-            Op.add_term(-1.5*rperpc*rz, "B+", "B0");
-            Op.add_term(-1.5*rperp*rz, "B0", "B-");
-            Op.add_term(-1.5*rperpc*rz, "B0", "B+");
+            Op.add_term(1.0+a*rz2, "B0", "B0");
+            Op.add_term(0.25*(2.0+a-a*rz2), "B-", "B+");
+            Op.add_term(0.25*(2.0+a-a*rz2), "B+", "B-");
+            Op.add_term(0.25*a*rperp*rperp, "B-", "B-");
+            Op.add_term(0.25*a*rperpc*rperpc, "B+", "B+");
+            Op.add_term(0.5*a*rperp*rz, "B-", "B0");
+            Op.add_term(0.5*a*rperpc*rz, "B+", "B0");
+            Op.add_term(0.5*a*rperp*rz, "B0", "B-");
+            Op.add_term(0.5*a*rperpc*rz, "B0", "B+");
         } else {
             itensor::Error("Operator \"" + opname + "\" name not recognized");
         }

@@ -10,9 +10,10 @@ using namespace itensor;
 int main(int argc, char* argv[]) {
     if (argc <= 1) {
         printfln("usage: %s [--pbc] [--geom-in-path <G>]"
-                          " [--field <F> [--field-linear]] {-R <R> | -g <G>}"
-                          " [--sociability <S>] --mpo-cutoff <C>"
-                          " --sites-in-path <S> --H-out-path <H>", argv[0]);
+                          " [--field <F> [--field-linear]] [--anisotropy <A>]"
+                          " {-R <R> | -g <G>} [--sociability <S>]"
+                          " --mpo-cutoff <C> --sites-in-path <S>"
+                          " --H-out-path <H>", argv[0]);
         return 1;
     }
 
@@ -21,6 +22,7 @@ int main(int argc, char* argv[]) {
     parser.add("--geom-in-path", ArgType::String, {"required", false});
     parser.add("--field", ArgType::Real, {"required", false});
     parser.add("--field-linear", ArgType::Flag, {"required", false});
+    parser.add("--anisotropy", ArgType::Real, {"required", false});
     parser.add("-R", ArgType::Real, {"required", false});
     parser.add("-g", ArgType::Real, {"required", false});
     parser.add("--sociability", ArgType::Int, {"required", false});
@@ -48,6 +50,7 @@ int main(int argc, char* argv[]) {
     auto geom_in_path = args.getString("geom-in-path", "");
     Real field = args.getReal("field", 0.0);
     bool field_linear = args.getBool("field-linear", false);
+    Real anisotropy = args.getReal("anisotropy", -3.0);
     int sociability = args.getInt("sociability", -1);
     Real mpo_cutoff = args.getReal("mpo-cutoff");
     auto sites_in_path = args.getString("sites-in-path");
@@ -107,7 +110,7 @@ int main(int argc, char* argv[]) {
                 Real rz = geom[3*(j-1)+2] - geom[3*(i-1)+2];
                 Real r = std::sqrt(rx*rx + ry*ry + rz*rz);
                 Real k = inter/(r*r*r);
-                add_operator(ampo, LinearRigidRotorSite::compound_op2("D-D", {"rx", rx/r, "ry", ry/r, "rz", rz/r}), i, j, k);
+                add_operator(ampo, LinearRigidRotorSite::compound_op2("D-D", {"a", anisotropy, "rx", rx/r, "ry", ry/r, "rz", rz/r}), i, j, k);
             } else {
                 int d = j-i;
                 if (pbc && j-i > N/2) {
@@ -116,7 +119,7 @@ int main(int argc, char* argv[]) {
                 }
                 if (sociability >= 0 && d > sociability) continue;
                 Real k = inter/(d*d*d);
-                add_operator(ampo, LinearRigidRotorSite::compound_op2("D-D lin"), i, j, k);
+                add_operator(ampo, LinearRigidRotorSite::compound_op2("D-D lin", {"a", anisotropy}), i, j, k);
             }
         }
     }

@@ -23,11 +23,21 @@ public:
 };
 
 
+template<class T>
+std::set<T> set_diff(std::set<T> a, std::set<T> b) {
+    std::set<T> amb;
+    std::set_difference(a.begin(), a.end(), b.begin(), b.end(),
+                        std::inserter(amb, amb.end()));
+    return amb;
+}
+
+
 class ArgumentParser {
     std::map<std::string, ArgumentTableEntry> table;
+    std::set<std::string> required;
 
 public:
-    void add(std::string label, ArgType type) {
+    void add(std::string label, ArgType type, itensor::Args const& args = itensor::Args::global()) {
         if (table.count(label) > 0) {
             itensor::Error("Argument already present");
         }
@@ -36,10 +46,15 @@ public:
         name.erase(0, name.find_first_not_of('-'));
 
         table[label] = ArgumentTableEntry{label, type, name};
+
+        if (args.getBool("required", true)) {
+            required.insert(label);
+        }
     }
 
     itensor::Args parse(int argc, char* argv[]) {
         std::vector<std::string> arg_strings(argv, argv + argc);
+        std::set<std::string> seen;
         itensor::Args args;
 
         for (int idx = 1; idx < argc;) {
@@ -51,6 +66,7 @@ public:
             }
 
             auto entry = table[current];
+            seen.insert(current);
 
             switch (entry.type) {
                 case ArgType::Flag:
@@ -73,6 +89,16 @@ public:
                     idx++;
                     break;
             }
+        }
+
+        auto missing = set_diff(required, seen);
+        if (missing.size() > 0) {
+            std::ostringstream oss;
+            oss << "Required options not given:";
+            for (auto it = missing.begin(); it != missing.end(); it++) {
+                oss << " " << *it;
+            }
+            itensor::Error(oss.str());
         }
 
         return args;

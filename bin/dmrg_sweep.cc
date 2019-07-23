@@ -19,10 +19,10 @@ int main(int argc, char* argv[]) {
     ArgumentParser parser;
     parser.add("--sweep-table", ArgType::String);
     parser.add("--num-sweeps", ArgType::Int);
-    parser.add("--skip-sweeps", ArgType::Int);
+    parser.add("--skip-sweeps", ArgType::Int, {"required", false});
     parser.add("--sites-in-path", ArgType::String);
     parser.add("--H-in-path", ArgType::String);
-    parser.add("--mps-in-path", ArgType::String);
+    parser.add("--mps-in-path", ArgType::String, {"required", false});
     parser.add("--mps-out-path", ArgType::String);
     auto args = parser.parse(argc, argv);
 

@@ -16,8 +16,8 @@ int main(int argc, char* argv[]) {
     ArgumentParser parser;
     parser.add("-N", ArgType::Int);
     parser.add("--l-max", ArgType::Int);
-    parser.add("--lp-sym", ArgType::Bool);
-    parser.add("--m-sym", ArgType::Bool);
+    parser.add("--lp-sym", ArgType::Bool, {"required", false});
+    parser.add("--m-sym", ArgType::Bool, {"required", false});
     parser.add("--sites-out-path", ArgType::String);
     auto args = parser.parse(argc, argv);
 

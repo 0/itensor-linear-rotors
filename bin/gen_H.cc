@@ -17,10 +17,10 @@ int main(int argc, char* argv[]) {
     }
 
     ArgumentParser parser;
-    parser.add("--pbc", ArgType::Flag);
-    parser.add("--geom-in-path", ArgType::String);
-    parser.add("--field", ArgType::Real);
-    parser.add("--field-linear", ArgType::Flag);
+    parser.add("--pbc", ArgType::Flag, {"required", false});
+    parser.add("--geom-in-path", ArgType::String, {"required", false});
+    parser.add("--field", ArgType::Real, {"required", false});
+    parser.add("--field-linear", ArgType::Flag, {"required", false});
     parser.add("-R", ArgType::Real);
     parser.add("--mpo-cutoff", ArgType::Real);
     parser.add("--sites-in-path", ArgType::String);

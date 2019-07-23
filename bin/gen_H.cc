@@ -10,7 +10,7 @@ using namespace itensor;
 int main(int argc, char* argv[]) {
     if (argc <= 1) {
         printfln("usage: %s [--pbc] [--geom-in-path <G>]"
-                          " [--field <F> [--field-linear]] -R <R>"
+                          " [--field <F> [--field-linear]] {-R <R> | -g <G>}"
                           " --mpo-cutoff <C> --sites-in-path <S>"
                           " --H-out-path <H>", argv[0]);
         return 1;
@@ -21,17 +21,32 @@ int main(int argc, char* argv[]) {
     parser.add("--geom-in-path", ArgType::String, {"required", false});
     parser.add("--field", ArgType::Real, {"required", false});
     parser.add("--field-linear", ArgType::Flag, {"required", false});
-    parser.add("-R", ArgType::Real);
+    parser.add("-R", ArgType::Real, {"required", false});
+    parser.add("-g", ArgType::Real, {"required", false});
     parser.add("--mpo-cutoff", ArgType::Real);
     parser.add("--sites-in-path", ArgType::String);
     parser.add("--H-out-path", ArgType::String);
     auto args = parser.parse(argc, argv);
 
+    Real inter;
+    if (!args.defined("R") && !args.defined("g")) {
+        println("One of -R or -g must be provided");
+        return 1;
+    } else if (args.defined("R") && args.defined("g")) {
+        println("Only one of -R or -g may be provided");
+        return 1;
+    } else if (args.defined("R")) {
+        Real R = args.getReal("R");
+        inter = 1.0/(R*R*R);
+    } else {
+        Real g = args.getReal("g");
+        inter = g;
+    }
+
     bool pbc = args.getBool("pbc", false);
     auto geom_in_path = args.getString("geom-in-path", "");
     Real field = args.getReal("field", 0.0);
     bool field_linear = args.getBool("field-linear", false);
-    Real R = args.getReal("R");
     Real mpo_cutoff = args.getReal("mpo-cutoff");
     auto sites_in_path = args.getString("sites-in-path");
     auto H_out_path = args.getString("H-out-path");
@@ -85,16 +100,15 @@ int main(int argc, char* argv[]) {
                 Real ry = geom[3*(j-1)+1] - geom[3*(i-1)+1];
                 Real rz = geom[3*(j-1)+2] - geom[3*(i-1)+2];
                 Real r = std::sqrt(rx*rx + ry*ry + rz*rz);
-                Real d = R*r;
-                Real k = 1.0/(d*d*d);
+                Real k = inter/(r*r*r);
                 add_operator(ampo, LinearRigidRotorSite::compound_op2("D-D", {"rx", rx/r, "ry", ry/r, "rz", rz/r}), i, j, k);
             } else {
-                Real d = R*(j-i);
+                int d = j-i;
                 if (pbc && j-i > N/2) {
                     // Minimum image convention for periodic boundary conditions.
-                    d = R*N - d;
+                    d = N - d;
                 }
-                Real k = 1.0/(d*d*d);
+                Real k = inter/(d*d*d);
                 add_operator(ampo, LinearRigidRotorSite::compound_op2("D-D lin"), i, j, k);
             }
         }

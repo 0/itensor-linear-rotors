@@ -5,22 +5,22 @@ An [ITensor](http://itensor.org/) [`SiteSet`](http://itensor.org/docs.cgi?page=c
 
 ## Examples
 
-* `bin/dipoles_dmrg 1.0 4 3 data/sample_sweep_table 2e-4 5 20`
+* `bin/dipoles_dmrg -R 1.0 -N 4 --l-max 3 --sweep-table data/sample_sweep_table --dH2-goal 2e-4 --sweeps-min 5 --sweeps-max 20`
 
 ---
 
-* `bin/dipoles_dmrg_write 1.0 4 3 data/sample_sweep_table 2e-4 5 20 sites H mps`
-* `bin/dipoles_dmrg_read sites H mps`
+* `bin/dipoles_dmrg_write -R 1.0 -N 4 --l-max 3 --sweep-table data/sample_sweep_table --dH2-goal 2e-4 --sweeps-min 5 --sweeps-max 20 --sites-path data/sites --H-path data/H --mps-path data/mps`
+* `bin/dipoles_dmrg_read --sites-path data/sites --H-path data/H --mps-path data/mps`
 
 ---
 
-* `bin/dipoles_dmrg_probabilities 1.0 3 3 data/sample_sweep_table 2e-4 5 20`
-* `bin/dipoles_dmrg_sampling 1.0 3 3 data/sample_sweep_table 2e-4 5 20 100`
+* `bin/dipoles_dmrg_probabilities -R 1.0 -N 3 --l-max 3 --sweep-table data/sample_sweep_table --dH2-goal 2e-4 --sweeps-min 5 --sweeps-max 20`
+* `bin/dipoles_dmrg_sampling -R 1.0 -N 3 --l-max 3 --sweep-table data/sample_sweep_table --dH2-goal 2e-4 --sweeps-min 5 --sweeps-max 20 --num-samples 100`
 
 ---
 
-* `bin/dipoles_dmrg_field 1.0 4 0.02 3 data/sample_sweep_table 2e-4 5 20`
-* `bin/dipoles_dmrg_nonlinear data/geom_tetrahedron 1.5 4 2 data/sample_sweep_table 2e-4 5 20`
+* `bin/dipoles_dmrg_field -R 1.0 --field 0.02 -N 4 --l-max 3 --sweep-table data/sample_sweep_table --dH2-goal 2e-4 --sweeps-min 5 --sweeps-max 20`
+* `bin/dipoles_dmrg_nonlinear --geom data/geom_tetrahedron -R 1.5 -N 4 --l-max 2 --sweep-table data/sample_sweep_table --dH2-goal 2e-4 --sweeps-min 5 --sweeps-max 20`
 
 
 ## Publications

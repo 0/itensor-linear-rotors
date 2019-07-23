@@ -2,6 +2,7 @@
 
 #include "linrot/linrigrot.h"
 #include "linrot/operators.h"
+#include "argparse.h"
 
 #include "dmrg.h"
 
@@ -9,15 +10,21 @@ using namespace itensor;
 
 
 int main(int argc, char* argv[]) {
-    if (argc != 4) {
-        printfln("usage: %s <sites_path> <H_path> <mps_path>", argv[0]);
-
-        return 1;
+    if (argc <= 1) {
+        printfln("usage: %s --sites-path <S> --H-path <H>"
+                          " --mps-path <M>", argv[0]);
+        return 0;
     }
 
-    std::string sites_path = argv[1];
-    std::string H_path = argv[2];
-    std::string mps_path = argv[3];
+    ArgumentParser parser;
+    parser.add("--sites-path", ArgType::String);
+    parser.add("--H-path", ArgType::String);
+    parser.add("--mps-path", ArgType::String);
+    auto args = parser.parse(argc, argv);
+
+    auto sites_path = args.getString("sites-path");
+    auto H_path = args.getString("H-path");
+    auto mps_path = args.getString("mps-path");
 
     auto sites = readFromFile<LinearRigidRotor>(sites_path);
     auto H = readFromFile<IQMPO>(H_path, sites);

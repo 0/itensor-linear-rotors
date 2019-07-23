@@ -23,5 +23,5 @@ linrot/operators.o: linrot/operators.cc linrot/operators.h
 dmrg.o: dmrg.cc dmrg.h linrot/linrigrot.h linrot/operators.h observer.h
 
 
-bin/%: bin/%.cc $(OBJECTS)
+bin/%: bin/%.cc $(OBJECTS) argparse.h
 	$(CXX) -o $@ $(CXXFLAGS) $^ $(LDLIBS)

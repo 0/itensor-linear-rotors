@@ -2,6 +2,7 @@
 
 #include "linrot/linrigrot.h"
 #include "linrot/operators.h"
+#include "argparse.h"
 
 #include "dmrg.h"
 
@@ -9,19 +10,30 @@ using namespace itensor;
 
 
 int main(int argc, char* argv[]) {
-    if (argc != 8) {
-        printfln("usage: %s <R> <N> <l_max> <sweep_table> <dH2_goal> <sweeps_min> <sweeps_max>", argv[0]);
-
-        return 1;
+    if (argc <= 1) {
+        printfln("usage: %s -R <R> -N <N> --l-max <L> --sweep-table <T>"
+                          " --dH2-goal <G> --sweeps-min <S>"
+                          " --sweeps-max <S>", argv[0]);
+        return 0;
     }
 
-    Real R = atof(argv[1]);
-    int N = atoi(argv[2]);
-    int l_max = atoi(argv[3]);
-    auto sweep_table = InputGroup(argv[4], "sweeps");
-    Real dH2_goal = atof(argv[5]);
-    int sweeps_min = atoi(argv[6]);
-    int sweeps_max = atoi(argv[7]);
+    ArgumentParser parser;
+    parser.add("-R", ArgType::Real);
+    parser.add("-N", ArgType::Int);
+    parser.add("--l-max", ArgType::Int);
+    parser.add("--sweep-table", ArgType::String);
+    parser.add("--dH2-goal", ArgType::Real);
+    parser.add("--sweeps-min", ArgType::Int);
+    parser.add("--sweeps-max", ArgType::Int);
+    auto args = parser.parse(argc, argv);
+
+    Real R = args.getReal("R");
+    int N = args.getInt("N");
+    int l_max = args.getInt("l-max");
+    auto sweep_table = InputGroup(args.getString("sweep-table"), "sweeps");
+    Real dH2_goal = args.getReal("dH2-goal");
+    int sweeps_min = args.getInt("sweeps-min");
+    int sweeps_max = args.getInt("sweeps-max");
 
     auto sites = LinearRigidRotor(N, {"l_max", l_max});
 

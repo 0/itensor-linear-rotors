@@ -2,6 +2,7 @@
 
 #include "linrot/linrigrot.h"
 #include "linrot/operators.h"
+#include "argparse.h"
 
 #include "dmrg.h"
 
@@ -9,20 +10,32 @@ using namespace itensor;
 
 
 int main(int argc, char* argv[]) {
-    if (argc != 9) {
-        printfln("usage: %s <R> <N> <field_strength> <l_max> <sweep_table> <dH2_goal> <sweeps_min> <sweeps_max>", argv[0]);
-
-        return 1;
+    if (argc <= 1) {
+        printfln("usage: %s -R <R> --field <F> -N <N> --l-max <L>"
+                          " --sweep-table <T> --dH2-goal <G>"
+                          " --sweeps-min <S> --sweeps-max <S>", argv[0]);
+        return 0;
     }
 
-    Real R = atof(argv[1]);
-    int N = atoi(argv[2]);
-    Real field_strength = atof(argv[3]);
-    int l_max = atoi(argv[4]);
-    auto sweep_table = InputGroup(argv[5], "sweeps");
-    Real dH2_goal = atof(argv[6]);
-    int sweeps_min = atoi(argv[7]);
-    int sweeps_max = atoi(argv[8]);
+    ArgumentParser parser;
+    parser.add("-R", ArgType::Real);
+    parser.add("--field", ArgType::Real);
+    parser.add("-N", ArgType::Int);
+    parser.add("--l-max", ArgType::Int);
+    parser.add("--sweep-table", ArgType::String);
+    parser.add("--dH2-goal", ArgType::Real);
+    parser.add("--sweeps-min", ArgType::Int);
+    parser.add("--sweeps-max", ArgType::Int);
+    auto args = parser.parse(argc, argv);
+
+    Real R = args.getReal("R");
+    Real field = args.getReal("field");
+    int N = args.getInt("N");
+    int l_max = args.getInt("l-max");
+    auto sweep_table = InputGroup(args.getString("sweep-table"), "sweeps");
+    Real dH2_goal = args.getReal("dH2-goal");
+    int sweeps_min = args.getInt("sweeps-min");
+    int sweeps_max = args.getInt("sweeps-max");
 
     auto sites = LinearRigidRotor(N, {"l_max", l_max, "lp_sym", false});
 
@@ -49,12 +62,12 @@ int main(int argc, char* argv[]) {
 #ifdef LINFIELD
     // Linear transverse field.
     for (auto i : range1(N)) {
-        add_operator(ampo, LinearRigidRotorSite::compound_op1("x"), i, field_strength*(N-i)/(N-1));
+        add_operator(ampo, LinearRigidRotorSite::compound_op1("x"), i, field*(N-i)/(N-1));
     }
 #else // LINFIELD
     // Uniform transverse field.
     for (auto i : range1(N)) {
-        add_operator(ampo, LinearRigidRotorSite::compound_op1("x"), i, field_strength);
+        add_operator(ampo, LinearRigidRotorSite::compound_op1("x"), i, field);
     }
 #endif // LINFIELD
     auto H = toMPO<IQTensor>(ampo, {"Cutoff=", 1e-40});

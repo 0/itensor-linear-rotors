@@ -11,8 +11,8 @@ int main(int argc, char* argv[]) {
     if (argc <= 1) {
         printfln("usage: %s [--pbc] [--geom-in-path <G>]"
                           " [--field <F> [--field-linear]] {-R <R> | -g <G>}"
-                          " --mpo-cutoff <C> --sites-in-path <S>"
-                          " --H-out-path <H>", argv[0]);
+                          " [--sociability <S>] --mpo-cutoff <C>"
+                          " --sites-in-path <S> --H-out-path <H>", argv[0]);
         return 1;
     }
 
@@ -23,6 +23,7 @@ int main(int argc, char* argv[]) {
     parser.add("--field-linear", ArgType::Flag, {"required", false});
     parser.add("-R", ArgType::Real, {"required", false});
     parser.add("-g", ArgType::Real, {"required", false});
+    parser.add("--sociability", ArgType::Int, {"required", false});
     parser.add("--mpo-cutoff", ArgType::Real);
     parser.add("--sites-in-path", ArgType::String);
     parser.add("--H-out-path", ArgType::String);
@@ -47,6 +48,7 @@ int main(int argc, char* argv[]) {
     auto geom_in_path = args.getString("geom-in-path", "");
     Real field = args.getReal("field", 0.0);
     bool field_linear = args.getBool("field-linear", false);
+    int sociability = args.getInt("sociability", -1);
     Real mpo_cutoff = args.getReal("mpo-cutoff");
     auto sites_in_path = args.getString("sites-in-path");
     auto H_out_path = args.getString("H-out-path");
@@ -73,6 +75,10 @@ int main(int argc, char* argv[]) {
         }
         if (field_linear) {
             println("No support for --field-linear with --geom-in-path");
+            return 1;
+        }
+        if (sociability >= 0) {
+            println("No support for --sociability with --geom-in-path");
             return 1;
         }
         if (sites.m_sym()) {
@@ -108,6 +114,7 @@ int main(int argc, char* argv[]) {
                     // Minimum image convention for periodic boundary conditions.
                     d = N - d;
                 }
+                if (sociability >= 0 && d > sociability) continue;
                 Real k = inter/(d*d*d);
                 add_operator(ampo, LinearRigidRotorSite::compound_op2("D-D lin"), i, j, k);
             }

@@ -12,7 +12,7 @@ An [ITensor](http://itensor.org/) [`SiteSet`](http://itensor.org/docs.cgi?page=c
 1. `bin/gen_sites -N 4 --l-max 2 --sites-out-path data/sites`
 1.
    * `bin/gen_H -R 1.0 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
-   * `bin/gen_H -g 1.0 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
+   * `bin/gen_H -g 1.0 --sociability 1 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
    * `bin/gen_H --pbc -R 1.0 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
 
 #### Reduced symmetry

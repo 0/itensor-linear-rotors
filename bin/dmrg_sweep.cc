@@ -10,29 +10,28 @@ using namespace itensor;
 int main(int argc, char* argv[]) {
     if (argc <= 1) {
         printfln("usage: %s --sweep-table <T> --num-sweeps <N>"
-                          " [--skip-sweeps <S>] --sites-in-path <S>"
-                          " --H-in-path <H> [--mps-in-path <M>]"
-                          " --mps-out-path <M>", argv[0]);
+                          " [--first-sweep <S>] --sites <S> --ham <H>"
+                          " [--mps-in <M>] --mps-out <M>", argv[0]);
         return 1;
     }
 
     ArgumentParser parser;
     parser.add("--sweep-table", ArgType::String);
     parser.add("--num-sweeps", ArgType::Int);
-    parser.add("--skip-sweeps", ArgType::Int, {"required", false});
-    parser.add("--sites-in-path", ArgType::String);
-    parser.add("--H-in-path", ArgType::String);
-    parser.add("--mps-in-path", ArgType::String, {"required", false});
-    parser.add("--mps-out-path", ArgType::String);
+    parser.add("--first-sweep", ArgType::Int, {"required", false});
+    parser.add("--sites", ArgType::String);
+    parser.add("--ham", ArgType::String);
+    parser.add("--mps-in", ArgType::String, {"required", false});
+    parser.add("--mps-out", ArgType::String);
     auto args = parser.parse(argc, argv);
 
     auto sweep_table = InputGroup(args.getString("sweep-table"), "sweeps");
     auto num_sweeps = args.getInt("num-sweeps");
-    auto skip_sweeps = args.getInt("skip-sweeps", 0);
-    auto sites_in_path = args.getString("sites-in-path");
-    auto H_in_path = args.getString("H-in-path");
-    auto mps_in_path = args.getString("mps-in-path", "");
-    auto mps_out_path = args.getString("mps-out-path");
+    auto skip_sweeps = args.getInt("first-sweep", 1) - 1;
+    auto sites_in_path = args.getString("sites");
+    auto H_in_path = args.getString("ham");
+    auto mps_in_path = args.getString("mps-in", "");
+    auto mps_out_path = args.getString("mps-out");
 
     auto sites = readFromFile<LinearRigidRotor>(sites_in_path);
     auto N = sites.N();

@@ -9,23 +9,22 @@ using namespace itensor;
 
 int main(int argc, char* argv[]) {
     if (argc <= 1) {
-        printfln("usage: %s --sites1-in-path <S> --mps1-in-path <M>"
-                          " --sites2-in-path <S>"
-                          " --mps2-out-path <M>", argv[0]);
+        printfln("usage: %s --sites1 <S> --mps1-in <M> --sites2 <S>"
+                          " --mps2-out <M>", argv[0]);
         return 1;
     }
 
     ArgumentParser parser;
-    parser.add("--sites1-in-path", ArgType::String);
-    parser.add("--mps1-in-path", ArgType::String);
-    parser.add("--sites2-in-path", ArgType::String);
-    parser.add("--mps2-out-path", ArgType::String);
+    parser.add("--sites1", ArgType::String);
+    parser.add("--mps1-in", ArgType::String);
+    parser.add("--sites2", ArgType::String);
+    parser.add("--mps2-out", ArgType::String);
     auto args = parser.parse(argc, argv);
 
-    auto sites1_in_path = args.getString("sites1-in-path");
-    auto mps1_in_path = args.getString("mps1-in-path");
-    auto sites2_in_path = args.getString("sites2-in-path");
-    auto mps2_out_path = args.getString("mps2-out-path");
+    auto sites1_in_path = args.getString("sites1");
+    auto mps1_in_path = args.getString("mps1-in");
+    auto sites2_in_path = args.getString("sites2");
+    auto mps2_out_path = args.getString("mps2-out");
 
     auto sites1 = readFromFile<LinearRigidRotor>(sites1_in_path);
     auto mps1 = readFromFile<IQMPS>(mps1_in_path, sites1);

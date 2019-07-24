@@ -9,36 +9,36 @@ An [ITensor](http://itensor.org/) [`SiteSet`](http://itensor.org/docs.cgi?page=c
 
 #### Full symmetry
 
-1. `bin/gen_sites -N 4 --l-max 2 --sites-out-path data/sites`
+1. `bin/gen_sites -N 4 --l-max 2 --sites-out workspace/sites`
 1.
-   * `bin/gen_H -R 1.0 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
-   * `bin/gen_H --anisotropy 0.0 -g -1.0 --sociability 1 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
-   * `bin/gen_H --pbc -R 1.0 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
+   * `bin/gen_ham -R 1.0 --mpo-cutoff 1e-20 --sites workspace/sites --ham-out workspace/ham`
+   * `bin/gen_ham --anisotropy 0.0 -g -1.0 --sociability 1 --mpo-cutoff 1e-20 --sites workspace/sites --ham-out workspace/ham`
+   * `bin/gen_ham --pbc -R 1.0 --mpo-cutoff 1e-20 --sites workspace/sites --ham-out workspace/ham`
 
 #### Reduced symmetry
 
-1. `bin/gen_sites -N 4 --l-max 2 --m-sym 0 --sites-out-path data/sites`
-1. `bin/gen_H --geom-in-path data/geom_tetrahedron -R 1.0 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
+1. `bin/gen_sites -N 4 --l-max 2 --m-sym 0 --sites-out workspace/sites`
+1. `bin/gen_ham --geom data/geom_tetrahedron -R 1.0 --mpo-cutoff 1e-20 --sites workspace/sites --ham-out workspace/ham`
 
 #### No symmetry
 
-1. `bin/gen_sites -N 4 --l-max 2 --lp-sym 0 --sites-out-path data/sites`
-1. `bin/gen_H --field 0.02 --field-linear -R 1.0 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
+1. `bin/gen_sites -N 4 --l-max 2 --lp-sym 0 --sites-out workspace/sites`
+1. `bin/gen_ham --field 0.02 --field-linear -R 1.0 --mpo-cutoff 1e-20 --sites workspace/sites --ham-out workspace/ham`
 
 ### Sweep MPS with DMRG
 
-1. `bin/dmrg_sweep --sweep-table data/sample_sweep_table --num-sweeps 5 --sites-in-path data/sites --H-in-path data/H --mps-out-path data/mps05`
-1. `bin/dmrg_sweep --sweep-table data/sample_sweep_table --num-sweeps 5 --skip-sweeps 5 --sites-in-path data/sites --H-in-path data/H --mps-in-path data/mps05 --mps-out-path data/mps10`
+1. `bin/dmrg_sweep --sweep-table data/sample_sweep_table --num-sweeps 5 --sites workspace/sites --ham workspace/ham --mps-out workspace/mps05`
+1. `bin/dmrg_sweep --sweep-table data/sample_sweep_table --num-sweeps 5 --first-sweep 6 --sites workspace/sites --ham workspace/ham --mps-in workspace/mps05 --mps-out workspace/mps10`
 
 ### Perform analysis
 
-* `bin/analyze --sites-in-path data/sites --mps-in-path data/mps10`
-* `bin/sample --num-samples 100 --sites-in-path data/sites --mps-in-path data/mps10`
-* `bin/dump_state --sites-in-path data/sites --mps-in-path data/mps10`
+* `bin/analyze --sites workspace/sites --mps workspace/mps10`
+* `bin/sample --num-samples 100 --sites workspace/sites --mps workspace/mps10`
+* `bin/dump_state --sites workspace/sites --mps workspace/mps10`
 
 ### Miscellaneous operations
 
-* `bin/embiggen --sites1-in-path data/sites --mps1-in-path data/mps10 --sites2-in-path data/sites_big --mps2-out-path data/mps10_big`
+* `bin/embiggen --sites1 workspace/sites --mps1-in workspace/mps10 --sites2 workspace/sites_big --mps2-out workspace/mps10_big`
 
 
 ## Publications

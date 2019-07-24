@@ -9,17 +9,17 @@ using namespace itensor;
 
 int main(int argc, char* argv[]) {
     if (argc <= 1) {
-        printfln("usage: %s [--pbc] [--geom-in-path <G>]"
+        printfln("usage: %s [--pbc] [--geom <G>]"
                           " [--field <F> [--field-linear]] [--anisotropy <A>]"
                           " {-R <R> | -g <G>} [--sociability <S>]"
-                          " --mpo-cutoff <C> --sites-in-path <S>"
-                          " --H-out-path <H>", argv[0]);
+                          " --mpo-cutoff <C> --sites <S>"
+                          " --ham-out <H>", argv[0]);
         return 1;
     }
 
     ArgumentParser parser;
     parser.add("--pbc", ArgType::Flag, {"required", false});
-    parser.add("--geom-in-path", ArgType::String, {"required", false});
+    parser.add("--geom", ArgType::String, {"required", false});
     parser.add("--field", ArgType::Real, {"required", false});
     parser.add("--field-linear", ArgType::Flag, {"required", false});
     parser.add("--anisotropy", ArgType::Real, {"required", false});
@@ -27,8 +27,8 @@ int main(int argc, char* argv[]) {
     parser.add("-g", ArgType::Real, {"required", false});
     parser.add("--sociability", ArgType::Int, {"required", false});
     parser.add("--mpo-cutoff", ArgType::Real);
-    parser.add("--sites-in-path", ArgType::String);
-    parser.add("--H-out-path", ArgType::String);
+    parser.add("--sites", ArgType::String);
+    parser.add("--ham-out", ArgType::String);
     auto args = parser.parse(argc, argv);
 
     Real inter;
@@ -47,14 +47,14 @@ int main(int argc, char* argv[]) {
     }
 
     bool pbc = args.getBool("pbc", false);
-    auto geom_in_path = args.getString("geom-in-path", "");
+    auto geom_in_path = args.getString("geom", "");
     Real field = args.getReal("field", 0.0);
     bool field_linear = args.getBool("field-linear", false);
     Real anisotropy = args.getReal("anisotropy", -3.0);
     int sociability = args.getInt("sociability", -1);
     Real mpo_cutoff = args.getReal("mpo-cutoff");
-    auto sites_in_path = args.getString("sites-in-path");
-    auto H_out_path = args.getString("H-out-path");
+    auto sites_in_path = args.getString("sites");
+    auto H_out_path = args.getString("ham-out");
 
     auto sites = readFromFile<LinearRigidRotor>(sites_in_path);
     auto N = sites.N();

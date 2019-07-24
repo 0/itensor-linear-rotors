@@ -15,4 +15,6 @@ void dump_coefficients(int l_max, IQMPS const& psi);
 
 void run_sampling(int l_max, IQMPS& psi, int num_samples);
 
+IQMPS embiggen(LinearRigidRotor const& sites1, IQMPS const& mps1, LinearRigidRotor const& sites2);
+
 #endif // __LINROT_DMRG_H

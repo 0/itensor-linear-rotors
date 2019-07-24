@@ -362,3 +362,64 @@ void run_sampling(int l_max, IQMPS& psi, int num_samples) {
         println();
     }
 }
+
+
+IQIndex extract_link(IQTensor const& A, IQTensor const& B) {
+    auto link = commonIndex(A, B, Link);
+    if (link.dir() != dir(A, link)) {
+        link.dag();
+    }
+    return link;
+}
+
+IQMPS embiggen(LinearRigidRotor const& sites1, IQMPS const& mps1, LinearRigidRotor const& sites2) {
+    auto N = sites2.N();
+    auto mps2 = IQMPS(sites2);
+
+    {
+        auto link_right = extract_link(mps1.A(1), mps1.A(2));
+        auto A = IQTensor(sites2(1), link_right);
+        for (auto idxR : range1(link_right.m())) {
+            for (auto idxS1 : range1(sites1(1).m())) {
+                auto val = mps1.A(1).cplx(sites1(1)(idxS1), link_right(idxR));
+                if (val == Cplx(0, 0)) continue;
+                auto label = LinearRigidRotorSite::state_label(sites1.l_max(), idxS1);
+                A.set(sites2(1, label), link_right(idxR), val);
+            }
+        }
+        mps2.setA(1, A);
+    }
+
+    for (auto i : range1(2, N-1)) {
+        auto link_left = extract_link(mps1.A(i), mps1.A(i-1));
+        auto link_right = extract_link(mps1.A(i), mps1.A(i+1));
+        auto A = IQTensor(link_left, sites2(i), link_right);
+        for (auto idxL : range1(link_left.m())) {
+            for (auto idxR : range1(link_right.m())) {
+                for (auto idxS1 : range1(sites1(i).m())) {
+                    auto val = mps1.A(i).cplx(link_left(idxL), sites1(i)(idxS1), link_right(idxR));
+                    if (val == Cplx(0, 0)) continue;
+                    auto label = LinearRigidRotorSite::state_label(sites1.l_max(), idxS1);
+                    A.set(link_left(idxL), sites2(i, label), link_right(idxR), val);
+                }
+            }
+        }
+        mps2.setA(i, A);
+    }
+
+    {
+        auto link_left = extract_link(mps1.A(N), mps1.A(N-1));
+        auto A = IQTensor(link_left, sites2(N));
+        for (auto idxL : range1(link_left.m())) {
+            for (auto idxS1 : range1(sites1(N).m())) {
+                auto val = mps1.A(N).cplx(link_left(idxL), sites1(N)(idxS1));
+                if (val == Cplx(0, 0)) continue;
+                auto label = LinearRigidRotorSite::state_label(sites1.l_max(), idxS1);
+                A.set(link_left(idxL), sites2(N, label), val);
+            }
+        }
+        mps2.setA(N, A);
+    }
+
+    return mps2;
+}

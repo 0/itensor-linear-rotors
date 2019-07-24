@@ -36,6 +36,10 @@ An [ITensor](http://itensor.org/) [`SiteSet`](http://itensor.org/docs.cgi?page=c
 * `bin/sample --num-samples 100 --sites-in-path data/sites --mps-in-path data/mps10`
 * `bin/dump_state --sites-in-path data/sites --mps-in-path data/mps10`
 
+### Miscellaneous operations
+
+* `bin/embiggen --sites1-in-path data/sites --mps1-in-path data/mps10 --sites2-in-path data/sites_big --mps2-out-path data/mps10_big`
+
 
 ## Publications
 

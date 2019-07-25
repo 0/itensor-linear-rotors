@@ -2,6 +2,18 @@
 #include "dmrg.h"
 
 
+std::string cplx2str(Cplx x) {
+    std::ostringstream oss;
+    printf(oss, "%.15f", x.real());
+    if (x.imag() > 1e-12) {
+        printf(oss, "+%.15fi", x.imag());
+    } else if (x.imag() < -1e-12) {
+        printf(oss, "-%.15fi", -x.imag());
+    }
+    return oss.str();
+}
+
+
 Sweeps make_sweeps(InputGroup& sweep_table, int num_sweeps, int skip_sweeps) {
     if (!sweep_table.GotoGroup()) {
         Error("Table \"" + sweep_table.name() + "\" not found");
@@ -13,14 +25,14 @@ Sweeps make_sweeps(InputGroup& sweep_table, int num_sweeps, int skip_sweeps) {
     auto sweeps = Sweeps(num_sweeps);
 
     int sw_phys = 0;
-    int maxm_last, minm_last, niter_last;
+    int maxdim_last, mindim_last, niter_last;
     Real cutoff_last, noise_last;
 
     for (int sw = 1; sw <= num_sweeps; sw++) {
-        int maxm_cur, minm_cur, niter_cur;
+        int maxdim_cur, mindim_cur, niter_cur;
         Real cutoff_cur, noise_cur;
 
-        sweep_table.file() >> maxm_cur >> minm_cur >> cutoff_cur >> niter_cur >> noise_cur;
+        sweep_table.file() >> maxdim_cur >> mindim_cur >> cutoff_cur >> niter_cur >> noise_cur;
 
         if (!sweep_table.file()) {
             // If we run out of values, use the last given values for the rest
@@ -30,8 +42,8 @@ Sweeps make_sweeps(InputGroup& sweep_table, int num_sweeps, int skip_sweeps) {
             }
 
             for (; sw <= num_sweeps; sw++) {
-                sweeps.setmaxm(sw, maxm_last);
-                sweeps.setminm(sw, minm_last);
+                sweeps.setmaxdim(sw, maxdim_last);
+                sweeps.setmindim(sw, mindim_last);
                 sweeps.setcutoff(sw, cutoff_last);
                 sweeps.setniter(sw, niter_last);
                 sweeps.setnoise(sw, noise_last);
@@ -40,8 +52,8 @@ Sweeps make_sweeps(InputGroup& sweep_table, int num_sweeps, int skip_sweeps) {
             break;
         }
 
-        maxm_last = maxm_cur;
-        minm_last = minm_cur;
+        maxdim_last = maxdim_cur;
+        mindim_last = mindim_cur;
         cutoff_last = cutoff_cur;
         niter_last = niter_cur;
         noise_last = noise_cur;
@@ -52,8 +64,8 @@ Sweeps make_sweeps(InputGroup& sweep_table, int num_sweeps, int skip_sweeps) {
             // We haven't skipped enough yet, so ignore the last values.
             sw--;
         } else {
-            sweeps.setmaxm(sw, maxm_last);
-            sweeps.setminm(sw, minm_last);
+            sweeps.setmaxdim(sw, maxdim_last);
+            sweeps.setmindim(sw, mindim_last);
             sweeps.setcutoff(sw, cutoff_last);
             sweeps.setniter(sw, niter_last);
             sweeps.setnoise(sw, noise_last);
@@ -63,14 +75,14 @@ Sweeps make_sweeps(InputGroup& sweep_table, int num_sweeps, int skip_sweeps) {
     return sweeps;
 }
 
-void dmrg_sweep(IQMPS& psi, IQMPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps, std::vector<IQMPS> ortho_wfs) {
-    int N = psi.N();
+void dmrg_sweep(MPS& psi, MPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps, std::vector<MPS> ortho_wfs) {
+    int N = length(psi);
 
     auto sweeps = make_sweeps(sweep_table, num_sweeps, skip_sweeps);
     println();
     println(sweeps);
 
-    auto obs = LinRotObserver<IQTensor>(psi, H, num_sweeps);
+    auto obs = LinRotObserver(psi, H);
 
     Real energy;
     if (ortho_wfs.empty()) {
@@ -102,22 +114,14 @@ void dmrg_sweep(IQMPS& psi, IQMPO const& H, InputGroup& sweep_table, int num_swe
     }
 
     for (auto i : range(ortho_wfs.size())) {
-        auto x = overlapC(ortho_wfs[i], psi);
-        printf("overlap(%02d) = %.15f", i, x.real());
-        if (x.imag() > 1e-12) {
-            printfln("+%.15fi", x.imag());
-        } else if (x.imag() < -1e-12) {
-            printfln("-%.15fi", -x.imag());
-        } else {
-            println();
-        }
+        auto x = innerC(ortho_wfs[i], psi);
+        printfln("overlap(%02d) = %s", i, cplx2str(x));
     }
 }
 
 
-void spatial_correlation(IQMPS& psi, std::string op1_name, std::string op2_name) {
-    int N = psi.N();
-    auto sites = psi.sites();
+void spatial_correlation(LinearRigidRotor const& sites, MPS& psi, std::string op1_name, std::string op2_name) {
+    int N = length(psi);
 
     Real *corr = new Real[N*N];
 
@@ -132,14 +136,14 @@ void spatial_correlation(IQMPS& psi, std::string op1_name, std::string op2_name)
             for (auto i : range1(N)) {
                 psi.position(i);
 
-                auto op_i = sites.op(term_i.op, i);
+                auto op_i = op(sites, term_i.op, i);
 
                 // Diagonal.
                 {
                     auto op_i1 = op_i;
-                    auto op_i2 = sites.op(term_j.op, i);
+                    auto op_i2 = op(sites, term_j.op, i);
 
-                    auto C = psi.A(i) * op_i1 * prime(op_i2) * dag(prime(psi.A(i), Site, 2));
+                    auto C = psi(i) * op_i1 * prime(op_i2) * dag(prime(psi(i), 2, "Site"));
                     auto zz = term_i.k * term_j.k * C.cplx();
 
                     if (std::abs(zz.imag()) > 1e-12) {
@@ -150,21 +154,21 @@ void spatial_correlation(IQMPS& psi, std::string op1_name, std::string op2_name)
                 }
 
                 // Off-diagonal.
-                auto idx = commonIndex(psi.A(i), psi.A(i+1), Link);
-                auto C = psi.A(i) * op_i * dag(prime(psi.A(i), Site, idx));
+                auto idx = commonIndex(psi(i), psi(i+1), "Link");
+                auto C = psi(i) * op_i * dag(prime(prime(psi(i), "Site"), idx));
 
                 for (auto j : range1(i+1, N)) {
-                    auto op_j = sites.op(term_j.op, j);
+                    auto op_j = op(sites, term_j.op, j);
 
                     if (j-1 > i) {
-                        C *= psi.A(j-1);
-                        C *= dag(prime(psi.A(j-1), Link));
+                        C *= psi(j-1);
+                        C *= dag(prime(psi(j-1), "Link"));
                     }
 
-                    auto D = C * psi.A(j);
+                    auto D = C * psi(j);
                     D *= op_j;
-                    auto idx = commonIndex(psi.A(j), psi.A(j-1), Link);
-                    D *= dag(prime(psi.A(j), idx, Site));
+                    auto idx = commonIndex(psi(j), psi(j-1), "Link");
+                    D *= dag(prime(prime(psi(j), "Site"), idx));
                     auto zz = term_i.k * term_j.k * D.cplx();
 
                     if (std::abs(zz.imag()) > 1e-12) {
@@ -186,9 +190,8 @@ void spatial_correlation(IQMPS& psi, std::string op1_name, std::string op2_name)
     delete[] corr;
 }
 
-void spatial_correlation2(IQMPS& psi, std::string op1a_name, std::string op1b_name, std::string op2a_name, std::string op2b_name) {
-    int N = psi.N();
-    auto sites = psi.sites();
+void spatial_correlation2(LinearRigidRotor const& sites, MPS& psi, std::string op1a_name, std::string op1b_name, std::string op2a_name, std::string op2b_name) {
+    int N = length(psi);
 
     Real *corr = new Real[N*N];
 
@@ -205,17 +208,17 @@ void spatial_correlation2(IQMPS& psi, std::string op1a_name, std::string op1b_na
                     for (auto i : range1(N)) {
                         psi.position(i);
 
-                        auto op_ia = sites.op(term_ia.op, i);
-                        auto op_ib = sites.op(term_ib.op, i);
+                        auto op_ia = op(sites, term_ia.op, i);
+                        auto op_ib = op(sites, term_ib.op, i);
 
                         // Diagonal.
                         {
                             auto op_i1a = op_ia;
                             auto op_i1b = op_ib;
-                            auto op_i2a = sites.op(term_ja.op, i);
-                            auto op_i2b = sites.op(term_jb.op, i);
+                            auto op_i2a = op(sites, term_ja.op, i);
+                            auto op_i2b = op(sites, term_jb.op, i);
 
-                            auto C = psi.A(i) * op_i1a * prime(op_i1b) * prime(op_i2a, 2) * prime(op_i2b, 3) * dag(prime(psi.A(i), Site, 4));
+                            auto C = psi(i) * op_i1a * prime(op_i1b) * prime(op_i2a, 2) * prime(op_i2b, 3) * dag(prime(psi(i), 4, "Site"));
                             auto zz = term_ia.k * term_ib.k * term_ja.k * term_jb.k * C.cplx();
 
                             if (std::abs(zz.imag()) > 1e-12) {
@@ -226,22 +229,22 @@ void spatial_correlation2(IQMPS& psi, std::string op1a_name, std::string op1b_na
                         }
 
                         // Off-diagonal.
-                        auto idx = commonIndex(psi.A(i), psi.A(i+1), Link);
-                        auto C = psi.A(i) * op_ia * prime(op_ib) * dag(prime(prime(psi.A(i), Site, 2), idx, 1));
+                        auto idx = commonIndex(psi(i), psi(i+1), "Link");
+                        auto C = psi(i) * op_ia * prime(op_ib) * dag(prime(prime(psi(i), 2, "Site"), idx));
 
                         for (auto j : range1(i+1, N)) {
-                            auto op_ja = sites.op(term_ja.op, j);
-                            auto op_jb = sites.op(term_jb.op, j);
+                            auto op_ja = op(sites, term_ja.op, j);
+                            auto op_jb = op(sites, term_jb.op, j);
 
                             if (j-1 > i) {
-                                C *= psi.A(j-1);
-                                C *= dag(prime(psi.A(j-1), Link));
+                                C *= psi(j-1);
+                                C *= dag(prime(psi(j-1), "Link"));
                             }
 
-                            auto D = C * psi.A(j);
+                            auto D = C * psi(j);
                             D *= op_ja * prime(op_jb);
-                            auto idx = commonIndex(psi.A(j), psi.A(j-1), Link);
-                            D *= dag(prime(prime(psi.A(j), Site, 2), idx, 1));
+                            auto idx = commonIndex(psi(j), psi(j-1), "Link");
+                            D *= dag(prime(prime(psi(j), 2, "Site"), idx));
                             auto zz = term_ia.k * term_ib.k * term_ja.k * term_jb.k * D.cplx();
 
                             if (std::abs(zz.imag()) > 1e-12) {
@@ -265,9 +268,8 @@ void spatial_correlation2(IQMPS& psi, std::string op1a_name, std::string op1b_na
     delete[] corr;
 }
 
-void run_analysis(IQMPS& psi) {
-    int N = psi.N();
-    auto sites = psi.sites();
+void run_analysis(LinearRigidRotor const& sites, MPS& psi) {
+    int N = length(psi);
 
     // Orientational correlation.
     auto OC_ampo = AutoMPO(sites);
@@ -276,19 +278,20 @@ void run_analysis(IQMPS& psi) {
             add_operator(OC_ampo, LinearRigidRotorSite::compound_op2("dot product"), i, j, 1.0);
         }
     }
-    auto OC = toMPO<IQTensor>(OC_ampo, {"Cutoff=", 1e-40});
-    printfln("orientational correlation = %.15f", overlap(psi, OC, psi)*2.0/(N*(N-1)));
+    auto OC_op = toMPO(OC_ampo, {"Cutoff=", 1e-40});
+    auto OC = innerC(psi, OC_op, psi)*2.0/(N*(N-1));
+    println("orientational correlation = ", cplx2str(OC));
 
     // Spatial correlations.
-    spatial_correlation(psi, "x", "x");
-    spatial_correlation(psi, "z", "z");
-    spatial_correlation2(psi, "z", "z", "z", "z");
+    spatial_correlation(sites, psi, "x", "x");
+    spatial_correlation(sites, psi, "z", "z");
+    spatial_correlation2(sites, psi, "z", "z", "z", "z");
 }
 
 
-void dump_coefficients(int l_max, IQMPS const& psi) {
-    int N = psi.N();
-    auto sites = psi.sites();
+void dump_coefficients(LinearRigidRotor const& sites, MPS const& psi) {
+    int l_max = sites.l_max();
+    int N = length(psi);
 
     // Start with {0, 1, 1, ..., 1, 1}.
     std::vector<int> conf(N);
@@ -300,7 +303,7 @@ void dump_coefficients(int l_max, IQMPS const& psi) {
         bool done = false;
         for (auto i : range1(N)) {
             conf[i-1]++;
-            if (conf[i-1] <= sites(i).m()) {
+            if (conf[i-1] <= dim(sites(i))) {
                 break;
             } else {
                 if (i == N) {
@@ -312,9 +315,9 @@ void dump_coefficients(int l_max, IQMPS const& psi) {
         }
         if (done) break;
 
-        auto tensor = dag(setElt(sites(1)(conf[0]))) * psi.A(1);
+        auto tensor = dag(setElt(sites(1)(conf[0]))) * psi(1);
         for (auto i : range1(2, N)) {
-            tensor *= dag(setElt(sites(i)(conf[i-1]))) * psi.A(i);
+            tensor *= dag(setElt(sites(i)(conf[i-1]))) * psi(i);
         }
         auto coef = tensor.cplx();
         auto prob = std::norm(coef);
@@ -326,26 +329,19 @@ void dump_coefficients(int l_max, IQMPS const& psi) {
         for (auto n : conf) {
             print(LinearRigidRotorSite::state_label(l_max, n), " ");
         }
-        printf("%.15f", coef.real());
-        if (coef.imag() > 1e-12) {
-            printfln("+%.15fi", coef.imag());
-        } else if (coef.imag() < -1e-12) {
-            printfln("-%.15fi", -coef.imag());
-        } else {
-            println();
-        }
+        println(cplx2str(coef));
     }
 }
 
 
-void run_sampling(int l_max, IQMPS& psi, int num_samples) {
-    int N = psi.N();
-    auto sites = psi.sites();
+void run_sampling(LinearRigidRotor const& sites, MPS& psi, int num_samples) {
+    int l_max = sites.l_max();
+    int N = length(psi);
 
     std::random_device rd;
     std::mt19937 rng(rd());
 
-    IQTensor cap;
+    ITensor cap;
 
     // Move the orthogonality center all the way to the first site so that the
     // other sites can be ignored when contracting.
@@ -355,16 +351,16 @@ void run_sampling(int l_max, IQMPS& psi, int num_samples) {
         std::vector<int> sample(N);
 
         for (auto i : range1(N)) {
-            auto tensor = i == 1 ? psi.A(i) : cap * psi.A(i);
-            auto rho = prime(dag(tensor), Site) * tensor;
+            auto tensor = i == 1 ? psi(i) : cap * psi(i);
+            auto rho = prime(dag(tensor), "Site") * tensor;
             auto I = sites(i);
             auto Ip = prime(I);
 
             // Compute the weights of the outcomes. The first weight is a dummy
             // for indexing and should always remain zero.
-            std::vector<Real> weights(I.m()+1);
-            for (auto idx : range1(I.m())) {
-                weights[idx] = rho.real(I(idx), Ip(idx));
+            std::vector<Real> weights(dim(I)+1);
+            for (auto idx : range1(dim(I))) {
+                weights[idx] = rho.cplx(I(idx), Ip(idx)).real();
             }
 
             // Sample.
@@ -384,61 +380,53 @@ void run_sampling(int l_max, IQMPS& psi, int num_samples) {
 }
 
 
-IQIndex extract_link(IQTensor const& A, IQTensor const& B) {
-    auto link = commonIndex(A, B, Link);
-    if (link.dir() != dir(A, link)) {
-        link.dag();
-    }
-    return link;
-}
-
-IQMPS embiggen(LinearRigidRotor const& sites1, IQMPS const& mps1, LinearRigidRotor const& sites2) {
-    auto N = sites2.N();
-    auto mps2 = IQMPS(sites2);
+MPS embiggen(LinearRigidRotor const& sites1, MPS const& mps1, LinearRigidRotor const& sites2) {
+    auto N = length(sites2);
+    auto mps2 = MPS(sites2);
 
     {
-        auto link_right = extract_link(mps1.A(1), mps1.A(2));
-        auto A = IQTensor(sites2(1), link_right);
-        for (auto idxR : range1(link_right.m())) {
-            for (auto idxS1 : range1(sites1(1).m())) {
-                auto val = mps1.A(1).cplx(sites1(1)(idxS1), link_right(idxR));
+        auto link_right = rightLinkIndex(mps1, 1);
+        auto A = ITensor(sites2(1), link_right);
+        for (auto idxR : range1(dim(link_right))) {
+            for (auto idxS1 : range1(dim(sites1(1)))) {
+                auto val = mps1(1).cplx(sites1(1)(idxS1), link_right(idxR));
                 if (val == Cplx(0, 0)) continue;
                 auto label = LinearRigidRotorSite::state_label(sites1.l_max(), idxS1);
                 A.set(sites2(1, label), link_right(idxR), val);
             }
         }
-        mps2.setA(1, A);
+        mps2.set(1, A);
     }
 
     for (auto i : range1(2, N-1)) {
-        auto link_left = extract_link(mps1.A(i), mps1.A(i-1));
-        auto link_right = extract_link(mps1.A(i), mps1.A(i+1));
-        auto A = IQTensor(link_left, sites2(i), link_right);
-        for (auto idxL : range1(link_left.m())) {
-            for (auto idxR : range1(link_right.m())) {
-                for (auto idxS1 : range1(sites1(i).m())) {
-                    auto val = mps1.A(i).cplx(link_left(idxL), sites1(i)(idxS1), link_right(idxR));
+        auto link_left = leftLinkIndex(mps1, i);
+        auto link_right = rightLinkIndex(mps1, i);
+        auto A = ITensor(link_left, sites2(i), link_right);
+        for (auto idxL : range1(dim(link_left))) {
+            for (auto idxR : range1(dim(link_right))) {
+                for (auto idxS1 : range1(dim(sites1(i)))) {
+                    auto val = mps1(i).cplx(link_left(idxL), sites1(i)(idxS1), link_right(idxR));
                     if (val == Cplx(0, 0)) continue;
                     auto label = LinearRigidRotorSite::state_label(sites1.l_max(), idxS1);
                     A.set(link_left(idxL), sites2(i, label), link_right(idxR), val);
                 }
             }
         }
-        mps2.setA(i, A);
+        mps2.set(i, A);
     }
 
     {
-        auto link_left = extract_link(mps1.A(N), mps1.A(N-1));
-        auto A = IQTensor(link_left, sites2(N));
-        for (auto idxL : range1(link_left.m())) {
-            for (auto idxS1 : range1(sites1(N).m())) {
-                auto val = mps1.A(N).cplx(link_left(idxL), sites1(N)(idxS1));
+        auto link_left = leftLinkIndex(mps1, N);
+        auto A = ITensor(link_left, sites2(N));
+        for (auto idxL : range1(dim(link_left))) {
+            for (auto idxS1 : range1(dim(sites1(N)))) {
+                auto val = mps1(N).cplx(link_left(idxL), sites1(N)(idxS1));
                 if (val == Cplx(0, 0)) continue;
                 auto label = LinearRigidRotorSite::state_label(sites1.l_max(), idxS1);
                 A.set(link_left(idxL), sites2(N, label), val);
             }
         }
-        mps2.setA(N, A);
+        mps2.set(N, A);
     }
 
     return mps2;

@@ -24,9 +24,9 @@ int main(int argc, char* argv[]) {
     auto mps_in_path = args.getString("mps");
 
     auto sites = readFromFile<LinearRigidRotor>(sites_in_path);
-    auto psi = readFromFile<IQMPS>(mps_in_path, sites);
+    auto psi = readFromFile<MPS>(mps_in_path, sites);
 
-    run_sampling(sites.l_max(), psi, num_samples);
+    run_sampling(sites, psi, num_samples);
 
     return 0;
 }

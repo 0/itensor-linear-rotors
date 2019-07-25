@@ -7,14 +7,14 @@
 using namespace itensor;
 
 
-void dmrg_sweep(IQMPS& psi, IQMPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps, std::vector<IQMPS> ortho_wfs);
+void dmrg_sweep(MPS& psi, MPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps, std::vector<MPS> ortho_wfs);
 
-void run_analysis(IQMPS& psi);
+void run_analysis(LinearRigidRotor const& sites, MPS& psi);
 
-void dump_coefficients(int l_max, IQMPS const& psi);
+void dump_coefficients(LinearRigidRotor const& sites, MPS const& psi);
 
-void run_sampling(int l_max, IQMPS& psi, int num_samples);
+void run_sampling(LinearRigidRotor const& sites, MPS& psi, int num_samples);
 
-IQMPS embiggen(LinearRigidRotor const& sites1, IQMPS const& mps1, LinearRigidRotor const& sites2);
+MPS embiggen(LinearRigidRotor const& sites1, MPS const& mps1, LinearRigidRotor const& sites2);
 
 #endif // __LINROT_DMRG_H

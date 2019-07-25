@@ -37,23 +37,23 @@ int main(int argc, char* argv[]) {
     auto mps_out_path = args.getString("mps-out");
 
     auto sites = readFromFile<LinearRigidRotor>(sites_in_path);
-    auto N = sites.N();
-    auto H = readFromFile<IQMPO>(H_in_path, sites);
+    auto N = length(sites);
+    auto H = readFromFile<MPO>(H_in_path, sites);
 
-    std::vector<IQMPS> ortho_wfs;
+    std::vector<MPS> ortho_wfs;
     if (!ortho_mps_in_path.empty()) {
-        ortho_wfs.push_back(readFromFile<IQMPS>(ortho_mps_in_path, sites));
+        ortho_wfs.push_back(readFromFile<MPS>(ortho_mps_in_path, sites));
     }
 
-    IQMPS psi;
+    MPS psi;
     if (mps_in_path.empty()) {
         auto state = InitState(sites);
         for (auto i : range1(N)) {
             state.set(i, "l0m0");
         }
-        psi = IQMPS(state);
+        psi = MPS(state);
     } else {
-        psi = readFromFile<IQMPS>(mps_in_path, sites);
+        psi = readFromFile<MPS>(mps_in_path, sites);
     }
 
     dmrg_sweep(psi, H, sweep_table, num_sweeps, skip_sweeps, ortho_wfs);

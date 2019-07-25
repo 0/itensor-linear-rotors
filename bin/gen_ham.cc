@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     auto H_out_path = args.getString("ham-out");
 
     auto sites = readFromFile<LinearRigidRotor>(sites_in_path);
-    auto N = sites.N();
+    auto N = length(sites);
 
     bool geom_nonlinear = false;
     double *geom;
@@ -133,8 +133,8 @@ int main(int argc, char* argv[]) {
             add_operator(ampo, LinearRigidRotorSite::compound_op1("x"), i, k);
         }
     }
-    auto H = toMPO<IQTensor>(ampo, {"Cutoff=", mpo_cutoff});
-    printfln("mean MPO bond dimension: %f", averageM(H));
+    auto H = toMPO(ampo, {"Cutoff=", mpo_cutoff});
+    printfln("mean MPO bond dimension: %f", averageLinkDim(H));
 
     if (geom_nonlinear) {
         delete[] geom;

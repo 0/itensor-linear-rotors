@@ -1,18 +1,16 @@
 #ifndef __LINROT_OBSERVER_H
 #define __LINROT_OBSERVER_H
 
-#include "itensor/mps/mps.h"
 #include "itensor/mps/DMRGObserver.h"
+#include "itensor/mps/mps.h"
+#include "itensor/mps/mpo.h"
 #include "itensor/util/print.h"
 
 
-template<class Tensor>
-class LinRotObserver : public itensor::DMRGObserver<Tensor> {
-    itensor::MPOt<Tensor> H;
+class LinRotObserver : public itensor::DMRGObserver {
+    itensor::MPO H;
 
-    int nsweep;
-
-    Tensor H2_contraction;
+    itensor::ITensor H2_contraction;
     itensor::Real dH2_;
 
     int max_num_eigs;
@@ -23,18 +21,16 @@ class LinRotObserver : public itensor::DMRGObserver<Tensor> {
     std::vector<itensor::Real> Sinfs;
 
 public:
-    LinRotObserver(itensor::MPSt<Tensor> const& psi,
-                   itensor::MPOt<Tensor> const& H, int nsweep,
+    LinRotObserver(itensor::MPS const& psi, itensor::MPO const& H,
                    itensor::Args const& args = itensor::Args::global())
-            : itensor::DMRGObserver<Tensor>(psi, args),
+            : itensor::DMRGObserver(psi, args),
               H(H),
-              nsweep(nsweep),
               dH2_(std::numeric_limits<itensor::Real>::infinity()),
               max_num_eigs(-1),
               middle_eigs_(16),
-              SvNs(psi.N()-1),
-              S2s(psi.N()-1),
-              Sinfs(psi.N()-1)
+              SvNs(length(psi)-1),
+              S2s(length(psi)-1),
+              Sinfs(length(psi)-1)
             { }
 
     itensor::Real dH2() {
@@ -58,11 +54,11 @@ public:
     }
 
     void measure(itensor::Args const& args = itensor::Args::global()) {
-        itensor::DMRGObserver<Tensor>::measure(args);
+        itensor::DMRGObserver::measure(args);
 
-        auto psi = itensor::DMRGObserver<Tensor>::psi();
-        auto N = psi.N();
-        auto spectrum = itensor::DMRGObserver<Tensor>::spectrum();
+        auto psi = itensor::DMRGObserver::psi();
+        auto N = length(psi);
+        auto spectrum = itensor::DMRGObserver::spectrum();
 
         auto sw = args.getInt("Sweep");
         auto b = args.getInt("AtBond");
@@ -105,33 +101,33 @@ public:
             // Start of second half-sweep.
             max_num_eigs = spectrum.numEigsKept();
 
-            H2_contraction = psi.A(b+1) * H.A(b+1) * prime(H.A(b+1)) * dag(prime(psi.A(b+1), 2));
+            H2_contraction = psi(b+1) * H(b+1) * prime(H(b+1)) * dag(prime(psi(b+1), 2));
         } else {
             // Rest of second half-sweep (including end).
             max_num_eigs = std::max(max_num_eigs, spectrum.numEigsKept());
 
-            H2_contraction *= psi.A(b+1);
-            H2_contraction *= H.A(b+1);
-            H2_contraction *= prime(H.A(b+1));
-            H2_contraction *= dag(prime(psi.A(b+1), 2));
+            H2_contraction *= psi(b+1);
+            H2_contraction *= H(b+1);
+            H2_contraction *= prime(H(b+1));
+            H2_contraction *= dag(prime(psi(b+1), 2));
         }
 
         if (b == 1) {
             // End of second half-sweep.
-            H2_contraction *= psi.A(1);
-            H2_contraction *= H.A(1);
-            H2_contraction *= prime(H.A(1));
-            H2_contraction *= dag(prime(psi.A(1), 2));
+            H2_contraction *= psi(1);
+            H2_contraction *= H(1);
+            H2_contraction *= prime(H(1));
+            H2_contraction *= dag(prime(psi(1), 2));
 
             if (std::abs(H2_contraction.cplx().imag()) > 1e-12) {
                 itensor::printfln("WARNING: Complex H2 (%.15f)", H2_contraction.cplx().imag());
-            } else if (H2_contraction.real() < 0.0) {
-                itensor::printfln("WARNING: Negative H2 (%.15f)", H2_contraction.real());
-            } else if (H2_contraction.real() < energy*energy) {
-                itensor::printfln("WARNING: H2 less than E^2 (%.15f < %.15f)", H2_contraction.real(), energy*energy);
+            } else if (H2_contraction.cplx().real() < 0.0) {
+                itensor::printfln("WARNING: Negative H2 (%.15f)", H2_contraction.cplx().real());
+            } else if (H2_contraction.cplx().real() < energy*energy) {
+                itensor::printfln("WARNING: H2 less than E^2 (%.15f < %.15f)", H2_contraction.cplx().real(), energy*energy);
             }
 
-            dH2_ = N*(H2_contraction.real()/(energy*energy) - 1.0);
+            dH2_ = N*(H2_contraction.cplx().real()/(energy*energy) - 1.0);
 
             itensor::printfln("    dH2 after sweep %d is %.12f", sw, dH2_);
         }
@@ -139,13 +135,14 @@ public:
 
     bool checkDone(itensor::Args const& args = itensor::Args::global()) {
         auto sw = args.getInt("Sweep");
-        auto maxm = args.getInt("Maxm");
+        auto nsweep = args.getInt("NSweep");
+        auto maxdim = args.getInt("MaxDim");
 
-        bool done = itensor::DMRGObserver<Tensor>::checkDone(args);
+        bool done = itensor::DMRGObserver::checkDone(args);
         done |= sw >= nsweep;
 
-        if (done && max_num_eigs >= maxm) {
-            itensor::println("WARNING: maxm reached on final sweep");
+        if (done && max_num_eigs >= maxdim) {
+            itensor::println("WARNING: maxdim reached on final sweep");
         }
 
         return done;

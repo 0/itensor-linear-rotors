@@ -27,10 +27,10 @@ int main(int argc, char* argv[]) {
     auto mps2_out_path = args.getString("mps2-out");
 
     auto sites1 = readFromFile<LinearRigidRotor>(sites1_in_path);
-    auto mps1 = readFromFile<IQMPS>(mps1_in_path, sites1);
+    auto mps1 = readFromFile<MPS>(mps1_in_path, sites1);
     auto sites2 = readFromFile<LinearRigidRotor>(sites2_in_path);
 
-    if (sites1.N() != sites2.N()) {
+    if (length(sites1) != length(sites2)) {
         println("Number of sites must match");
         return 1;
     }

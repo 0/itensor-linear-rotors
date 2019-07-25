@@ -16,7 +16,7 @@ class LinearRigidRotorSite {
     int l_max;
     bool lp_sym;
     bool m_sym;
-    itensor::IQIndex s;
+    itensor::Index s;
 
 protected:
     void set_args(itensor::Args const& args) {
@@ -70,35 +70,28 @@ protected:
         }
     }
 
-    itensor::IQIndex construct_index(int n) const {
-        std::vector<itensor::IndexQN> iq;
+    itensor::Index construct_index() const {
+        auto qnints = itensor::Index::qnstorage();
 
         for (auto block : blocks()) {
-            int lp = std::get<0>(block.first);
-            int m = std::get<1>(block.first);
+            auto [lp, m] = block.first;
             int size = block.second.size();
 
             if (lp_sym) {
                 if (m_sym) {
-                    auto index = itensor::Index(itensor::format("lp%dm%d:site%d", lp, m, n),
-                                                size, itensor::Site);
-                    auto qn = itensor::QN({lp, 2}, {m, 1});
-                    iq.push_back(itensor::IndexQN(index, qn));
+                    auto qn = itensor::QN({"lp", lp, 2}, {"m", m});
+                    qnints.push_back({qn, size});
                 } else {
-                    auto index = itensor::Index(itensor::format("lp%d:site%d", lp, n),
-                                                size, itensor::Site);
-                    auto qn = itensor::QN({lp, 2});
-                    iq.push_back(itensor::IndexQN(index, qn));
+                    auto qn = itensor::QN({"lp", lp, 2});
+                    qnints.push_back({qn, size});
                 }
             } else {
-                auto index = itensor::Index(itensor::format(":site%d", n),
-                                            size, itensor::Site);
                 auto qn = itensor::QN();
-                iq.push_back(itensor::IndexQN(index, qn));
+                qnints.push_back({qn, size});
             }
         }
 
-        return itensor::IQIndex{itensor::nameint("rotor site=", n), std::move(iq)};
+        return itensor::Index(std::move(qnints), "Site");
     }
 
     void populate_state_map() {
@@ -114,24 +107,24 @@ protected:
     }
 
 public:
-    LinearRigidRotorSite(itensor::IQIndex s, itensor::Args const& args = itensor::Args::global()) : s(s) {
+    LinearRigidRotorSite(itensor::Index s, itensor::Args const& args = itensor::Args::global()) : s(s) {
         set_args(args);
         populate_idx_map();
         populate_state_map();
     }
 
-    LinearRigidRotorSite(int n, itensor::Args const& args = itensor::Args::global()) {
+    LinearRigidRotorSite(itensor::Args const& args = itensor::Args::global()) {
         set_args(args);
-        s = construct_index(n);
+        s = construct_index();
         populate_idx_map();
         populate_state_map();
     }
 
-    itensor::IQIndex index() const {
+    itensor::Index index() const {
         return s;
     }
 
-    itensor::IQIndexVal state(std::string const& state) {
+    itensor::IndexVal state(std::string const& state) {
         std::istringstream iss(state);
         char x1, x2;
         int l, m;
@@ -141,15 +134,15 @@ public:
         if (iss.fail() != 0 || x1 != 'l' || x2 != 'm' || l < 0 || l_max < l || m < -l || l < m) {
             itensor::Error("State " + state + " not recognized");
 
-            return itensor::IQIndexVal{};
+            return itensor::IndexVal{};
         }
 
         return s(basis_idx(l, m));
     }
 
-    itensor::IQTensor op(std::string const& opname, itensor::Args const& args) const {
+    itensor::ITensor op(std::string const& opname, itensor::Args const& args) const {
         auto sP = itensor::prime(s);
-        auto Op = itensor::IQTensor(dag(s), sP);
+        auto Op = itensor::ITensor(dag(s), sP);
 
         if (opname == "1") {
             for (int l = 0; l <= l_max; l++) {
@@ -304,7 +297,7 @@ public:
 
         auto sites = itensor::SiteStore(N);
         for (auto i : itensor::range1(N)) {
-            sites.set(i, LinearRigidRotorSite(i, args));
+            sites.set(i, LinearRigidRotorSite(args));
         }
         SiteSet::init(std::move(sites));
     }
@@ -322,16 +315,16 @@ public:
     }
 
     void write(std::ostream& s) const {
-        if (N() == 0) {
+        if (length() == 0) {
             itensor::Error("Refusing to write empty SiteSet");
         }
 
         itensor::write(s, l_max_);
         itensor::write(s, lp_sym_);
         itensor::write(s, m_sym_);
-        itensor::write(s, N());
+        itensor::write(s, length());
 
-        for (auto i : itensor::range1(N())) {
+        for (auto i : itensor::range1(length())) {
             this->operator()(i).write(s);
         }
     }
@@ -349,7 +342,7 @@ public:
         auto args = itensor::Args{"l_max", l_max_, "lp_sym", lp_sym_, "m_sym", m_sym_};
         auto sites = itensor::SiteStore(N);
         for (auto i : itensor::range1(N)) {
-            auto I = itensor::IQIndex{};
+            auto I = itensor::Index{};
             I.read(s);
             sites.set(i, LinearRigidRotorSite(I, args));
         }

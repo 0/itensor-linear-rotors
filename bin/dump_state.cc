@@ -22,9 +22,9 @@ int main(int argc, char* argv[]) {
     auto mps_in_path = args.getString("mps");
 
     auto sites = readFromFile<LinearRigidRotor>(sites_in_path);
-    auto psi = readFromFile<IQMPS>(mps_in_path, sites);
+    auto psi = readFromFile<MPS>(mps_in_path, sites);
 
-    dump_coefficients(sites.l_max(), psi);
+    dump_coefficients(sites, psi);
 
     return 0;
 }

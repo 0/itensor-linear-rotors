@@ -7,7 +7,7 @@
 using namespace itensor;
 
 
-void dmrg_sweep(MPS& psi, MPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps, std::vector<MPS> ortho_wfs);
+void dmrg_sweep(MPS& psi, MPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps, std::vector<MPS> ortho_wfs, Real mps_cutoff = -1.0);
 
 void run_analysis(LinearRigidRotor const& sites, MPS& psi);
 

@@ -14,7 +14,7 @@ std::string cplx2str(Cplx x) {
 }
 
 
-Sweeps make_sweeps(InputGroup& sweep_table, int num_sweeps, int skip_sweeps) {
+Sweeps make_sweeps(InputGroup& sweep_table, int num_sweeps, int skip_sweeps, Real mps_cutoff) {
     if (!sweep_table.GotoGroup()) {
         Error("Table \"" + sweep_table.name() + "\" not found");
     }
@@ -72,13 +72,17 @@ Sweeps make_sweeps(InputGroup& sweep_table, int num_sweeps, int skip_sweeps) {
         }
     }
 
+    if (mps_cutoff >= 0.0) {
+        sweeps.cutoff() = mps_cutoff;
+    }
+
     return sweeps;
 }
 
-void dmrg_sweep(MPS& psi, MPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps, std::vector<MPS> ortho_wfs) {
+void dmrg_sweep(MPS& psi, MPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps, std::vector<MPS> ortho_wfs, Real mps_cutoff) {
     int N = length(psi);
 
-    auto sweeps = make_sweeps(sweep_table, num_sweeps, skip_sweeps);
+    auto sweeps = make_sweeps(sweep_table, num_sweeps, skip_sweeps, mps_cutoff);
     println();
     println(sweeps);
 

@@ -371,9 +371,9 @@ void run_sampling(LinearRigidRotor const& sites, MPS& psi, int num_samples) {
             cap = dag(setElt(I(sample[i-1]))) * tensor;
         }
 
-        print("sample ", sample_idx, ": ");
+        print("sample ", sample_idx, ":");
         for (auto n : sample) {
-            print(LinearRigidRotorSite::state_label(l_max, n), " ");
+            print(" ", LinearRigidRotorSite::state_label(l_max, n));
         }
         println();
     }

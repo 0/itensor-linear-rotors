@@ -11,53 +11,14 @@
 class LinearRigidRotorSite {
     static std::map<int,std::map<int,std::string> > state_map;
 
+    std::map<std::tuple<int,int>,int> idx_map;
+
     int l_max;
     bool lp_sym;
     bool m_sym;
     itensor::IQIndex s;
 
 protected:
-    int m_offset(int l, int m) const {
-        int m_offset = 0;
-        for (int mp = -l_max; mp < m; mp++) {
-            m_offset += (l_max-l%2)/2+1 - (std::abs(mp)+1-l%2)/2;
-        }
-        return m_offset;
-    }
-
-    int basis_idx(int l, int m) const {
-        // The basis states are labelled by lp, m, and l quantum numbers, where
-        // lp = l % 2 is the parity of l. The states are ordered so that l
-        // changes most rapidly (in the sense of an innermost loop), m is next,
-        // and lp changes most slowly (in the sense of an outer loop). Note
-        // that while lp and m increment regularly, l decreases in steps of 2.
-        // The order for lp and m is determined in the constructor when we
-        // create the blocks for the IQIndex, and the order for l (within a
-        // block) is determined here.
-        //
-        // For example, for l_max = 2, the states are ordered as follows:
-        //     idx  lp   m  l
-        //     1    0   -2  2
-        //     2    0   -1  2
-        //     3    0    0  2
-        //     4    0    0  0
-        //     5    0   +1  2
-        //     6    0   +2  2
-        //     7    1   -1  1
-        //     8    1    0  1
-        //     9    1   +1  1
-
-        if (lp_sym) {
-            if (m_sym) {
-                return offset(s, itensor::findByQN(s, itensor::QN(l%2, m))) + (l_max-l)/2 + 1;
-            } else {
-                return offset(s, itensor::findByQN(s, itensor::QN(l%2))) + m_offset(l, m) + (l_max-l)/2 + 1;
-            }
-        } else {
-            return (l%2)*(l_max/2+1)*(l_max-l_max%2+1) + m_offset(l, m) + (l_max-l)/2 + 1;
-        }
-    }
-
     void set_args(itensor::Args const& args) {
         l_max = args.getInt("l_max");
         lp_sym = args.getBool("lp_sym", true);
@@ -65,6 +26,79 @@ protected:
         if (!lp_sym && m_sym) {
             itensor::Error("m_sym not allowed without lp_sym");
         }
+    }
+
+    int basis_idx(int l, int m) const {
+        return idx_map.at({l, m});
+    }
+
+    std::map<std::tuple<int,int>,std::vector<std::tuple<int,int> > > blocks() const {
+        // Mapping from quantum numbers identifying a symmetry block to the
+        // states contained in that block.
+        std::map<std::tuple<int,int>,std::vector<std::tuple<int,int> > > blocks;
+
+        // The quantum numbers are l parity (modulus 2) and m (modulus 1,
+        // meaning regular addition). Populate the blocks by enumerating all
+        // possible one-rotor states.
+        for (int l = 0; l <= l_max; l++) {
+            int lp = l % 2;
+
+            for (int m = -l; m <= l; m++) {
+                if (lp_sym) {
+                    if (m_sym) {
+                        blocks[{lp, m}].push_back({l, m});
+                    } else {
+                        blocks[{lp, 0}].push_back({l, m});
+                    }
+                } else {
+                    blocks[{0, 0}].push_back({l, m});
+                }
+            }
+        }
+
+        return blocks;
+    }
+
+    void populate_idx_map() {
+        int state_idx = 1;
+
+        for (auto block : blocks()) {
+            for (auto state : block.second) {
+                idx_map[state] = state_idx;
+                state_idx++;
+            }
+        }
+    }
+
+    itensor::IQIndex construct_index(int n) const {
+        std::vector<itensor::IndexQN> iq;
+
+        for (auto block : blocks()) {
+            int lp = std::get<0>(block.first);
+            int m = std::get<1>(block.first);
+            int size = block.second.size();
+
+            if (lp_sym) {
+                if (m_sym) {
+                    auto index = itensor::Index(itensor::format("lp%dm%d:site%d", lp, m, n),
+                                                size, itensor::Site);
+                    auto qn = itensor::QN({lp, 2}, {m, 1});
+                    iq.push_back(itensor::IndexQN(index, qn));
+                } else {
+                    auto index = itensor::Index(itensor::format("lp%d:site%d", lp, n),
+                                                size, itensor::Site);
+                    auto qn = itensor::QN({lp, 2});
+                    iq.push_back(itensor::IndexQN(index, qn));
+                }
+            } else {
+                auto index = itensor::Index(itensor::format(":site%d", n),
+                                            size, itensor::Site);
+                auto qn = itensor::QN();
+                iq.push_back(itensor::IndexQN(index, qn));
+            }
+        }
+
+        return itensor::IQIndex{itensor::nameint("rotor site=", n), std::move(iq)};
     }
 
     void populate_state_map() {
@@ -82,45 +116,14 @@ protected:
 public:
     LinearRigidRotorSite(itensor::IQIndex s, itensor::Args const& args = itensor::Args::global()) : s(s) {
         set_args(args);
+        populate_idx_map();
         populate_state_map();
     }
 
     LinearRigidRotorSite(int n, itensor::Args const& args = itensor::Args::global()) {
         set_args(args);
-
-        std::vector<itensor::IndexQN> iq;
-
-        // The quantum numbers are total l parity (modulus 2) and total m
-        // (modulus 1, meaning regular addition).
-        if (lp_sym) {
-            for (int lp = 0; lp <= 1; lp++) {
-                if (m_sym) {
-                    for (int m = -l_max; m <= l_max; m++) {
-                        int size = (l_max - std::abs(m) + (std::abs(m) % 2 == lp) + (l_max % 2 == lp)) / 2;
-
-                        if (size == 0) continue;
-
-                        iq.push_back(itensor::IndexQN(itensor::Index(itensor::format("lp%dm%d:site%d", lp, m, n), size, itensor::Site),
-                                                      itensor::QN({lp, 2}, {m, 1})));
-                    }
-                } else {
-                    int size = 2*((l_max+lp)/2)*((l_max+lp)/2+1) + (2*lp+1)*((l_max+lp)/2+1);
-
-                    if (size == 0) continue;
-
-                    iq.push_back(itensor::IndexQN(itensor::Index(itensor::format("lp%d:site%d", lp, n), size, itensor::Site),
-                                                  itensor::QN({lp, 2})));
-                }
-            }
-        } else {
-            int size = (l_max+1)*(l_max+1);
-
-            iq.push_back(itensor::IndexQN(itensor::Index(itensor::format(":site%d", n), size, itensor::Site),
-                                          itensor::QN()));
-        }
-
-        s = itensor::IQIndex{itensor::nameint("rotor site=", n), std::move(iq)};
-
+        s = construct_index(n);
+        populate_idx_map();
         populate_state_map();
     }
 

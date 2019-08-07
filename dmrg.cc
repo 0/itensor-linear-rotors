@@ -282,7 +282,7 @@ void run_analysis(LinearRigidRotor const& sites, MPS& psi) {
             add_operator(OC_ampo, LinearRigidRotorSite::compound_op2("dot product"), i, j, 1.0);
         }
     }
-    auto OC_op = toMPO(OC_ampo, {"Cutoff", 1e-40});
+    auto OC_op = toMPO(OC_ampo, {"Exact", true});
     auto OC = innerC(psi, OC_op, psi)*2.0/(N*(N-1));
     println("orientational correlation = ", cplx2str(OC));
 

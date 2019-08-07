@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
             add_operator(ampo, LinearRigidRotorSite::compound_op1("x"), i, k);
         }
     }
-    auto H = toMPO(ampo, {"Cutoff=", mpo_cutoff});
+    auto H = toMPO(ampo, {"Cutoff", mpo_cutoff});
     printfln("mean MPO bond dimension: %.15e", averageLinkDim(H));
 
     if (geom_nonlinear) {

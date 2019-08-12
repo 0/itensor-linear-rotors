@@ -29,6 +29,7 @@ An [ITensor](http://itensor.org/) [`SiteSet`](http://itensor.org/docs.cgi?page=c
 
 1. `bin/dmrg_sweep --sweep-table data/sample_sweep_table --num-sweeps 5 --sites workspace/sites --ham workspace/ham --mps-out workspace/mps05`
 1. `bin/dmrg_sweep --sweep-table data/sample_sweep_table --num-sweeps 5 --first-sweep 6 --sites workspace/sites --ham workspace/ham --mps-in workspace/mps05 --mps-out workspace/mps10`
+1. `bin/dmrg_sweep --sweep-table data/sample_sweep_table --num-sweeps 10 --sites workspace/sites --ham workspace/ham --ortho-mps workspace/mps10 --mps-out workspace/mps_exc`
 
 ### Perform analysis
 

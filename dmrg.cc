@@ -63,7 +63,7 @@ Sweeps make_sweeps(InputGroup& sweep_table, int num_sweeps, int skip_sweeps) {
     return sweeps;
 }
 
-void dmrg_sweep(IQMPS& psi, IQMPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps) {
+void dmrg_sweep(IQMPS& psi, IQMPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps, std::vector<IQMPS> ortho_wfs) {
     int N = psi.N();
 
     auto sweeps = make_sweeps(sweep_table, num_sweeps, skip_sweeps);
@@ -71,7 +71,15 @@ void dmrg_sweep(IQMPS& psi, IQMPO const& H, InputGroup& sweep_table, int num_swe
     println(sweeps);
 
     auto obs = LinRotObserver<IQTensor>(psi, H, num_sweeps);
-    auto energy = dmrg(psi, H, sweeps, obs, "Quiet");
+
+    Real energy;
+    if (ortho_wfs.empty()) {
+        // Ground state.
+        energy = dmrg(psi, H, sweeps, obs, "Quiet");
+    } else {
+        // Excited state.
+        energy = dmrg(psi, H, ortho_wfs, sweeps, obs, {"Quiet", true, "Weight", 20.0});
+    }
 
     println();
     printfln("E0 = %.15f", energy);
@@ -91,6 +99,18 @@ void dmrg_sweep(IQMPS& psi, IQMPO const& H, InputGroup& sweep_table, int num_swe
     }
     for (auto i : range1(N/2)) {
         printfln("Sinf(%04d) = %.15f", i, obs.Sinf(i));
+    }
+
+    for (auto i : range(ortho_wfs.size())) {
+        auto x = overlapC(ortho_wfs[i], psi);
+        printf("overlap(%02d) = %.15f", i, x.real());
+        if (x.imag() > 1e-12) {
+            printfln("+%.15fi", x.imag());
+        } else if (x.imag() < -1e-12) {
+            printfln("-%.15fi", -x.imag());
+        } else {
+            println();
+        }
     }
 }
 

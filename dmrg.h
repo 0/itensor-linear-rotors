@@ -7,7 +7,7 @@
 using namespace itensor;
 
 
-void dmrg_sweep(IQMPS& psi, IQMPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps);
+void dmrg_sweep(IQMPS& psi, IQMPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps, std::vector<IQMPS> ortho_wfs);
 
 void run_analysis(IQMPS& psi);
 

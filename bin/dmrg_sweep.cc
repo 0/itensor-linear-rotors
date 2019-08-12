@@ -11,7 +11,8 @@ int main(int argc, char* argv[]) {
     if (argc <= 1) {
         printfln("usage: %s --sweep-table <T> --num-sweeps <N>"
                           " [--first-sweep <S>] --sites <S> --ham <H>"
-                          " [--mps-in <M>] --mps-out <M>", argv[0]);
+                          " [--ortho-mps <M>] [--mps-in <M>]"
+                          " --mps-out <M>", argv[0]);
         return 1;
     }
 
@@ -21,6 +22,7 @@ int main(int argc, char* argv[]) {
     parser.add("--first-sweep", ArgType::Int, {"required", false});
     parser.add("--sites", ArgType::String);
     parser.add("--ham", ArgType::String);
+    parser.add("--ortho-mps", ArgType::String, {"required", false});
     parser.add("--mps-in", ArgType::String, {"required", false});
     parser.add("--mps-out", ArgType::String);
     auto args = parser.parse(argc, argv);
@@ -30,12 +32,18 @@ int main(int argc, char* argv[]) {
     auto skip_sweeps = args.getInt("first-sweep", 1) - 1;
     auto sites_in_path = args.getString("sites");
     auto H_in_path = args.getString("ham");
+    auto ortho_mps_in_path = args.getString("ortho-mps", "");
     auto mps_in_path = args.getString("mps-in", "");
     auto mps_out_path = args.getString("mps-out");
 
     auto sites = readFromFile<LinearRigidRotor>(sites_in_path);
     auto N = sites.N();
     auto H = readFromFile<IQMPO>(H_in_path, sites);
+
+    std::vector<IQMPS> ortho_wfs;
+    if (!ortho_mps_in_path.empty()) {
+        ortho_wfs.push_back(readFromFile<IQMPS>(ortho_mps_in_path, sites));
+    }
 
     IQMPS psi;
     if (mps_in_path.empty()) {
@@ -48,7 +56,7 @@ int main(int argc, char* argv[]) {
         psi = readFromFile<IQMPS>(mps_in_path, sites);
     }
 
-    dmrg_sweep(psi, H, sweep_table, num_sweeps, skip_sweeps);
+    dmrg_sweep(psi, H, sweep_table, num_sweeps, skip_sweeps, ortho_wfs);
 
     writeToFile(mps_out_path, psi);
 

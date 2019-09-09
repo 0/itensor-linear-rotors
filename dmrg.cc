@@ -4,11 +4,11 @@
 
 std::string cplx2str(Cplx x) {
     std::ostringstream oss;
-    printf(oss, "%.15f", x.real());
+    printf(oss, "%.15e", x.real());
     if (x.imag() > 1e-12) {
-        printf(oss, "+%.15fi", x.imag());
+        printf(oss, "+%.15ei", x.imag());
     } else if (x.imag() < -1e-12) {
-        printf(oss, "-%.15fi", -x.imag());
+        printf(oss, "-%.15ei", -x.imag());
     }
     return oss.str();
 }
@@ -94,23 +94,23 @@ void dmrg_sweep(MPS& psi, MPO const& H, InputGroup& sweep_table, int num_sweeps,
     }
 
     println();
-    printfln("E0 = %.15f", energy);
-    printfln("dH2 = %.15f", obs.dH2());
+    printfln("E0 = %.15e", energy);
+    printfln("dH2 = %.15e", obs.dH2());
 
     // Entanglement spectrum at middle bond.
     for (auto lambda : obs.middle_eigs()) {
-        printfln("lambda = %.15f", lambda);
+        printfln("lambda = %.15e", lambda);
     }
 
     // Entanglement entropy.
     for (auto i : range1(N/2)) {
-        printfln("SvN(%04d) = %.15f", i, obs.SvN(i));
+        printfln("SvN(%04d) = %.15e", i, obs.SvN(i));
     }
     for (auto i : range1(N/2)) {
-        printfln("S2(%04d) = %.15f", i, obs.S2(i));
+        printfln("S2(%04d) = %.15e", i, obs.S2(i));
     }
     for (auto i : range1(N/2)) {
-        printfln("Sinf(%04d) = %.15f", i, obs.Sinf(i));
+        printfln("Sinf(%04d) = %.15e", i, obs.Sinf(i));
     }
 
     for (auto i : range(ortho_wfs.size())) {
@@ -147,7 +147,7 @@ void spatial_correlation(LinearRigidRotor const& sites, MPS& psi, std::string op
                     auto zz = term_i.k * term_j.k * C.cplx();
 
                     if (std::abs(zz.imag()) > 1e-12) {
-                        printfln("WARNING: Complex correlation (%.15f)", zz.imag());
+                        printfln("WARNING: Complex correlation (%.15e)", zz.imag());
                     }
 
                     corr[(N+1)*(i-1)] += zz.real();
@@ -172,7 +172,7 @@ void spatial_correlation(LinearRigidRotor const& sites, MPS& psi, std::string op
                     auto zz = term_i.k * term_j.k * D.cplx();
 
                     if (std::abs(zz.imag()) > 1e-12) {
-                        printfln("WARNING: Complex correlation (%.15f)", zz.imag());
+                        printfln("WARNING: Complex correlation (%.15e)", zz.imag());
                     }
 
                     corr[N*(i-1)+(j-1)] += zz.real();
@@ -183,7 +183,7 @@ void spatial_correlation(LinearRigidRotor const& sites, MPS& psi, std::string op
 
     for (auto i : range1(N)) {
         for (auto j : range1(i, N)) {
-            printfln("<%s%04d %s%04d> = %.15f", op1_name, i, op2_name, j, corr[N*(i-1)+(j-1)]);
+            printfln("<%s%04d %s%04d> = %.15e", op1_name, i, op2_name, j, corr[N*(i-1)+(j-1)]);
         }
     }
 
@@ -222,7 +222,7 @@ void spatial_correlation2(LinearRigidRotor const& sites, MPS& psi, std::string o
                             auto zz = term_ia.k * term_ib.k * term_ja.k * term_jb.k * C.cplx();
 
                             if (std::abs(zz.imag()) > 1e-12) {
-                                printfln("WARNING: Complex correlation (%.15f)", zz.imag());
+                                printfln("WARNING: Complex correlation (%.15e)", zz.imag());
                             }
 
                             corr[(N+1)*(i-1)] += zz.real();
@@ -248,7 +248,7 @@ void spatial_correlation2(LinearRigidRotor const& sites, MPS& psi, std::string o
                             auto zz = term_ia.k * term_ib.k * term_ja.k * term_jb.k * D.cplx();
 
                             if (std::abs(zz.imag()) > 1e-12) {
-                                printfln("WARNING: Complex correlation (%.15f)", zz.imag());
+                                printfln("WARNING: Complex correlation (%.15e)", zz.imag());
                             }
 
                             corr[N*(i-1)+(j-1)] += zz.real();
@@ -261,7 +261,7 @@ void spatial_correlation2(LinearRigidRotor const& sites, MPS& psi, std::string o
 
     for (auto i : range1(N)) {
         for (auto j : range1(i, N)) {
-            printfln("<%s%04d %s%04d %s%04d %s%04d> = %.15f", op1a_name, i, op1b_name, i, op2a_name, j, op2b_name, j, corr[N*(i-1)+(j-1)]);
+            printfln("<%s%04d %s%04d %s%04d %s%04d> = %.15e", op1a_name, i, op1b_name, i, op2a_name, j, op2b_name, j, corr[N*(i-1)+(j-1)]);
         }
     }
 

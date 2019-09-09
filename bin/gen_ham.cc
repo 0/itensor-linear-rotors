@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
         }
     }
     auto H = toMPO(ampo, {"Cutoff=", mpo_cutoff});
-    printfln("mean MPO bond dimension: %f", averageLinkDim(H));
+    printfln("mean MPO bond dimension: %.15e", averageLinkDim(H));
 
     if (geom_nonlinear) {
         delete[] geom;

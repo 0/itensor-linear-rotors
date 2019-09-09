@@ -120,16 +120,16 @@ public:
             H2_contraction *= dag(prime(psi(1), 2));
 
             if (std::abs(H2_contraction.cplx().imag()) > 1e-12) {
-                itensor::printfln("WARNING: Complex H2 (%.15f)", H2_contraction.cplx().imag());
+                itensor::printfln("WARNING: Complex H2 (%.15e)", H2_contraction.cplx().imag());
             } else if (H2_contraction.cplx().real() < 0.0) {
-                itensor::printfln("WARNING: Negative H2 (%.15f)", H2_contraction.cplx().real());
+                itensor::printfln("WARNING: Negative H2 (%.15e)", H2_contraction.cplx().real());
             } else if (H2_contraction.cplx().real() < energy*energy) {
-                itensor::printfln("WARNING: H2 less than E^2 (%.15f < %.15f)", H2_contraction.cplx().real(), energy*energy);
+                itensor::printfln("WARNING: H2 less than E^2 (%.15e < %.15e)", H2_contraction.cplx().real(), energy*energy);
             }
 
             dH2_ = N*(H2_contraction.cplx().real()/(energy*energy) - 1.0);
 
-            itensor::printfln("    dH2 after sweep %d is %.12f", sw, dH2_);
+            itensor::printfln("    dH2 after sweep %d is %.15e", sw, dH2_);
         }
     }
 

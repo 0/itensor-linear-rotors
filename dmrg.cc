@@ -32,6 +32,9 @@ IQMPS run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_
     for (auto i : range1(N/2)) {
         printfln("S2(%04d) = %.15f", i, obs.S2(i));
     }
+    for (auto i : range1(N/2)) {
+        printfln("Sinf(%04d) = %.15f", i, obs.Sinf(i));
+    }
 
     return psi;
 }

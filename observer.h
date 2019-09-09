@@ -21,6 +21,7 @@ class LinRotObserver : public itensor::DMRGObserver<Tensor> {
 
     std::vector<itensor::Real> SvNs;
     std::vector<itensor::Real> S2s;
+    std::vector<itensor::Real> Sinfs;
 
 public:
     LinRotObserver(itensor::MPSt<Tensor> const& psi,
@@ -37,7 +38,8 @@ public:
               dH2_(std::numeric_limits<itensor::Real>::infinity()),
               max_num_eigs(-1),
               SvNs(psi.N()-1),
-              S2s(psi.N()-1)
+              S2s(psi.N()-1),
+              Sinfs(psi.N()-1)
             { }
 
     itensor::Real dH2() {
@@ -50,6 +52,10 @@ public:
 
     itensor::Real S2(int i) {
         return S2s[i-1];
+    }
+
+    itensor::Real Sinf(int i) {
+        return Sinfs[i-1];
     }
 
     void measure(itensor::Args const& args = itensor::Args::global()) {
@@ -69,14 +75,20 @@ public:
 
         itensor::Real SvN_ = 0.0;
         itensor::Real S2_ = 0.0;
+        itensor::Real max_eig = -1.0;
         for (auto p : spectrum.eigsKept()) {
             if (p < 1e-12) continue;
 
             SvN_ += -p*log(p);
             S2_ += p*p;
+
+            if (p > max_eig) {
+                max_eig = p;
+            }
         }
         SvNs[b-1] = SvN_;
         S2s[b-1] = -log(S2_);
+        Sinfs[b-1] = -log(max_eig);
 
         if (b+1 == N) {
             // Start of second half-sweep.

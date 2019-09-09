@@ -2,23 +2,75 @@
 #include "dmrg.h"
 
 
-IQMPS run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_min, int sweeps_max, IQMPO const& H, Real dH2_goal) {
-    if (sweeps_min > sweeps_max) {
-        Error("sweeps_min must not exceed sweeps_max");
+Sweeps make_sweeps(InputGroup& sweep_table, int num_sweeps, int skip_sweeps) {
+    if (!sweep_table.GotoGroup()) {
+        Error("Table \"" + sweep_table.name() + "\" not found");
     }
 
-    auto state = InitState(sites);
-    for (auto i : range1(N)) {
-        state.set(i, "l0m0");
-    }
-    auto psi = IQMPS(state);
+    // Skip the header.
+    sweep_table.SkipLine();
 
-    auto sweeps = Sweeps(sweeps_max, sweep_table);
+    auto sweeps = Sweeps(num_sweeps);
+
+    int sw_phys = 0;
+    int maxm_last, minm_last, niter_last;
+    Real cutoff_last, noise_last;
+
+    for (int sw = 1; sw <= num_sweeps; sw++) {
+        int maxm_cur, minm_cur, niter_cur;
+        Real cutoff_cur, noise_cur;
+
+        sweep_table.file() >> maxm_cur >> minm_cur >> cutoff_cur >> niter_cur >> noise_cur;
+
+        if (!sweep_table.file()) {
+            // If we run out of values, use the last given values for the rest
+            // of the sweeps.
+            if (sw_phys < 1) {
+                Error("Not enough sweeps provided");
+            }
+
+            for (; sw <= num_sweeps; sw++) {
+                sweeps.setmaxm(sw, maxm_last);
+                sweeps.setminm(sw, minm_last);
+                sweeps.setcutoff(sw, cutoff_last);
+                sweeps.setniter(sw, niter_last);
+                sweeps.setnoise(sw, noise_last);
+            }
+
+            break;
+        }
+
+        maxm_last = maxm_cur;
+        minm_last = minm_cur;
+        cutoff_last = cutoff_cur;
+        niter_last = niter_cur;
+        noise_last = noise_cur;
+
+        sw_phys++;
+
+        if (sw_phys <= skip_sweeps) {
+            // We haven't skipped enough yet, so ignore the last values.
+            sw--;
+        } else {
+            sweeps.setmaxm(sw, maxm_last);
+            sweeps.setminm(sw, minm_last);
+            sweeps.setcutoff(sw, cutoff_last);
+            sweeps.setniter(sw, niter_last);
+            sweeps.setnoise(sw, noise_last);
+        }
+    }
+
+    return sweeps;
+}
+
+void dmrg_sweep(IQMPS& psi, IQMPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps) {
+    int N = psi.N();
+
+    auto sweeps = make_sweeps(sweep_table, num_sweeps, skip_sweeps);
     println();
     println(sweeps);
 
-    auto obs = LinRotObserver<IQTensor>(psi, H, sweeps_min, sweeps_max, dH2_goal);
-
+    auto obs = LinRotObserver<IQTensor>(psi, H, num_sweeps);
     auto energy = dmrg(psi, H, sweeps, obs, "Quiet");
 
     println();
@@ -40,9 +92,8 @@ IQMPS run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_
     for (auto i : range1(N/2)) {
         printfln("Sinf(%04d) = %.15f", i, obs.Sinf(i));
     }
-
-    return psi;
 }
+
 
 void spatial_correlation(IQMPS& psi, std::string op1_name, std::string op2_name) {
     int N = psi.N();
@@ -206,7 +257,6 @@ void run_analysis(IQMPS& psi) {
         }
     }
     auto OC = toMPO<IQTensor>(OC_ampo, {"Cutoff=", 1e-40});
-
     printfln("orientational correlation = %.15f", overlap(psi, OC, psi)*2.0/(N*(N-1)));
 
     // Spatial correlations.
@@ -215,7 +265,8 @@ void run_analysis(IQMPS& psi) {
     spatial_correlation2(psi, "z", "z", "z", "z");
 }
 
-void dump_probabilities(IQMPS const& psi, int l_max) {
+
+void dump_coefficients(int l_max, IQMPS const& psi) {
     int N = psi.N();
     auto sites = psi.sites();
 
@@ -245,20 +296,29 @@ void dump_probabilities(IQMPS const& psi, int l_max) {
         for (auto i : range1(2, N)) {
             tensor *= dag(setElt(sites(i)(conf[i-1]))) * psi.A(i);
         }
-        auto prob = tensor.real() * tensor.real();
+        auto coef = tensor.cplx();
+        auto prob = std::norm(coef);
 
         // Only output configurations that have sufficient probability.
         if (prob < 1e-12) continue;
 
-        print("probability: ");
+        print("coefficient: ");
         for (auto n : conf) {
             print(LinearRigidRotorSite::state_label(l_max, n), " ");
         }
-        printfln("%.15f", prob);
+        printf("%.15f", coef.real());
+        if (coef.imag() > 1e-12) {
+            printfln("+%.15fi", coef.imag());
+        } else if (coef.imag() < -1e-12) {
+            printfln("-%.15fi", -coef.imag());
+        } else {
+            println();
+        }
     }
 }
 
-void run_sampling(IQMPS& psi, int l_max, int num_samples) {
+
+void run_sampling(int l_max, IQMPS& psi, int num_samples) {
     int N = psi.N();
     auto sites = psi.sites();
 

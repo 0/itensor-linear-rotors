@@ -10,11 +10,9 @@ template<class Tensor>
 class LinRotObserver : public itensor::DMRGObserver<Tensor> {
     itensor::MPOt<Tensor> H;
 
-    int sweeps_min;
-    int sweeps_max;
+    int nsweep;
 
     Tensor H2_contraction;
-    itensor::Real dH2_goal;
     itensor::Real dH2_;
 
     int max_num_eigs;
@@ -26,16 +24,11 @@ class LinRotObserver : public itensor::DMRGObserver<Tensor> {
 
 public:
     LinRotObserver(itensor::MPSt<Tensor> const& psi,
-                   itensor::MPOt<Tensor> const& H,
-                   int sweeps_min,
-                   int sweeps_max,
-                   itensor::Real dH2_goal,
+                   itensor::MPOt<Tensor> const& H, int nsweep,
                    itensor::Args const& args = itensor::Args::global())
             : itensor::DMRGObserver<Tensor>(psi, args),
               H(H),
-              sweeps_min(sweeps_min),
-              sweeps_max(sweeps_max),
-              dH2_goal(dH2_goal),
+              nsweep(nsweep),
               dH2_(std::numeric_limits<itensor::Real>::infinity()),
               max_num_eigs(-1),
               middle_eigs_(16),
@@ -148,24 +141,11 @@ public:
         auto sw = args.getInt("Sweep");
         auto maxm = args.getInt("Maxm");
 
-        bool done = false;
+        bool done = itensor::DMRGObserver<Tensor>::checkDone(args);
+        done |= sw >= nsweep;
 
-        if (itensor::DMRGObserver<Tensor>::checkDone(args)) {
-            done = true;
-        } else {
-            // Only stop if the bond dimension has not been saturated, we have
-            // completed the minimum number of sweeps, and dH2 meets the goal.
-            done = max_num_eigs < maxm && sw >= sweeps_min && dH2_ <= dH2_goal;
-        }
-
-        if (done || sw == sweeps_max) {
-            if (max_num_eigs >= maxm) {
-                itensor::println("WARNING: maxm reached on final sweep!");
-            }
-
-            if (dH2_ > dH2_goal) {
-                itensor::println("WARNING: dH2 goal not reached!");
-            }
+        if (done && max_num_eigs >= maxm) {
+            itensor::println("WARNING: maxm reached on final sweep!");
         }
 
         return done;

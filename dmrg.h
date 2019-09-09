@@ -7,12 +7,12 @@
 using namespace itensor;
 
 
-IQMPS run_dmrg(SiteSet const& sites, int N, InputGroup& sweep_table, int sweeps_min, int sweeps_max, IQMPO const& H, Real dH2_goal);
+void dmrg_sweep(IQMPS& psi, IQMPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps);
 
 void run_analysis(IQMPS& psi);
 
-void dump_probabilities(IQMPS const& psi, int l_max);
+void dump_coefficients(int l_max, IQMPS const& psi);
 
-void run_sampling(IQMPS& psi, int l_max, int num_samples);
+void run_sampling(int l_max, IQMPS& psi, int num_samples);
 
 #endif // __LINROT_DMRG_H

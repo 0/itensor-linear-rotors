@@ -3,24 +3,37 @@
 An [ITensor](http://itensor.org/) [`SiteSet`](http://itensor.org/docs.cgi?page=classes/siteset) for linear rotors.
 
 
-## Examples
+## Example workflow
 
-* `bin/dipoles_dmrg -R 1.0 -N 4 --l-max 3 --sweep-table data/sample_sweep_table --dH2-goal 2e-4 --sweeps-min 5 --sweeps-max 20`
+### Generate sites and Hamiltonian MPO
 
----
+#### Full symmetry
 
-* `bin/dipoles_dmrg_write -R 1.0 -N 4 --l-max 3 --sweep-table data/sample_sweep_table --dH2-goal 2e-4 --sweeps-min 5 --sweeps-max 20 --sites-path data/sites --H-path data/H --mps-path data/mps`
-* `bin/dipoles_dmrg_read --sites-path data/sites --H-path data/H --mps-path data/mps`
+1. `bin/gen_sites -N 4 --l-max 2 --sites-out-path data/sites`
+1.
+   * `bin/gen_H -R 1.0 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
+   * `bin/gen_H --pbc -R 1.0 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
 
----
+#### Reduced symmetry
 
-* `bin/dipoles_dmrg_probabilities -R 1.0 -N 3 --l-max 3 --sweep-table data/sample_sweep_table --dH2-goal 2e-4 --sweeps-min 5 --sweeps-max 20`
-* `bin/dipoles_dmrg_sampling -R 1.0 -N 3 --l-max 3 --sweep-table data/sample_sweep_table --dH2-goal 2e-4 --sweeps-min 5 --sweeps-max 20 --num-samples 100`
+1. `bin/gen_sites -N 4 --l-max 2 --m-sym 0 --sites-out-path data/sites`
+1. `bin/gen_H --geom-in-path data/geom_tetrahedron -R 1.0 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
 
----
+#### No symmetry
 
-* `bin/dipoles_dmrg_field -R 1.0 --field 0.02 -N 4 --l-max 3 --sweep-table data/sample_sweep_table --dH2-goal 2e-4 --sweeps-min 5 --sweeps-max 20`
-* `bin/dipoles_dmrg_nonlinear --geom data/geom_tetrahedron -R 1.5 -N 4 --l-max 2 --sweep-table data/sample_sweep_table --dH2-goal 2e-4 --sweeps-min 5 --sweeps-max 20`
+1. `bin/gen_sites -N 4 --l-max 2 --lp-sym 0 --sites-out-path data/sites`
+1. `bin/gen_H --field 0.02 --field-linear -R 1.0 --mpo-cutoff 1e-20 --sites-in-path data/sites --H-out-path data/H`
+
+### Sweep MPS with DMRG
+
+1. `bin/dmrg_sweep --sweep-table data/sample_sweep_table --num-sweeps 5 --sites-in-path data/sites --H-in-path data/H --mps-out-path data/mps05`
+1. `bin/dmrg_sweep --sweep-table data/sample_sweep_table --num-sweeps 5 --skip-sweeps 5 --sites-in-path data/sites --H-in-path data/H --mps-in-path data/mps05 --mps-out-path data/mps10`
+
+### Perform analysis
+
+* `bin/analyze --sites-in-path data/sites --mps-in-path data/mps10`
+* `bin/sample --num-samples 100 --sites-in-path data/sites --mps-in-path data/mps10`
+* `bin/dump_state --sites-in-path data/sites --mps-in-path data/mps10`
 
 
 ## Publications

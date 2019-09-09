@@ -7,7 +7,9 @@
 
 
 enum class ArgType {
+    Flag,
     Int,
+    Bool,
     Real,
     String,
 };
@@ -51,8 +53,15 @@ public:
             auto entry = table[current];
 
             switch (entry.type) {
+                case ArgType::Flag:
+                    args.add(entry.name, true);
+                    break;
                 case ArgType::Int:
                     args.add(entry.name, atoi(arg_strings[idx].c_str()));
+                    idx++;
+                    break;
+                case ArgType::Bool:
+                    args.add(entry.name, static_cast<bool>(atoi(arg_strings[idx].c_str())));
                     idx++;
                     break;
                 case ArgType::Real:

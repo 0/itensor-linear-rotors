@@ -286,17 +286,17 @@ public:
 
 
 class LinearRigidRotor : public itensor::SiteSet {
-    int l_max;
-    bool lp_sym;
-    bool m_sym;
+    int l_max_;
+    bool lp_sym_;
+    bool m_sym_;
 
 public:
     LinearRigidRotor() { }
 
     LinearRigidRotor(int N, itensor::Args const& args = itensor::Args::global()) {
-        l_max = args.getInt("l_max");
-        lp_sym = args.getBool("lp_sym", true);
-        m_sym = args.getBool("m_sym", lp_sym);
+        l_max_ = args.getInt("l_max");
+        lp_sym_ = args.getBool("lp_sym", true);
+        m_sym_ = args.getBool("m_sym", lp_sym_);
 
         auto sites = itensor::SiteStore(N);
         for (auto i : itensor::range1(N)) {
@@ -305,14 +305,26 @@ public:
         SiteSet::init(std::move(sites));
     }
 
+    int l_max() const {
+        return l_max_;
+    }
+
+    bool lp_sym() const {
+        return lp_sym_;
+    }
+
+    bool m_sym() const {
+        return m_sym_;
+    }
+
     void write(std::ostream& s) const {
         if (N() == 0) {
             itensor::Error("Refusing to write empty SiteSet");
         }
 
-        itensor::write(s, l_max);
-        itensor::write(s, lp_sym);
-        itensor::write(s, m_sym);
+        itensor::write(s, l_max_);
+        itensor::write(s, lp_sym_);
+        itensor::write(s, m_sym_);
         itensor::write(s, N());
 
         for (auto i : itensor::range1(N())) {
@@ -321,16 +333,16 @@ public:
     }
 
     void read(std::istream& s) {
-        l_max = itensor::read<int>(s);
-        lp_sym = itensor::read<bool>(s);
-        m_sym = itensor::read<bool>(s);
+        l_max_ = itensor::read<int>(s);
+        lp_sym_ = itensor::read<bool>(s);
+        m_sym_ = itensor::read<bool>(s);
         int N = itensor::read<int>(s);
 
         if (N == 0) {
             itensor::Error("Refusing to read empty SiteSet");
         }
 
-        auto args = itensor::Args{"l_max", l_max, "lp_sym", lp_sym, "m_sym", m_sym};
+        auto args = itensor::Args{"l_max", l_max_, "lp_sym", lp_sym_, "m_sym", m_sym_};
         auto sites = itensor::SiteStore(N);
         for (auto i : itensor::range1(N)) {
             auto I = itensor::IQIndex{};

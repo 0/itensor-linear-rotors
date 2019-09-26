@@ -24,7 +24,10 @@ int main(int argc, char* argv[]) {
     auto sites = readFromFile<LinearRigidRotor>(sites_in_path);
     auto psi = readFromFile<MPS>(mps_in_path, sites);
 
+    cpu_time time;
     run_analysis(sites, psi);
+    printfln("cputime = %.15e", time.sincemark().time);
+    printfln("walltime = %.15e", time.sincemark().wall);
 
     return 0;
 }

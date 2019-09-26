@@ -96,6 +96,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    cpu_time time;
     auto ampo = AutoMPO(sites);
     // Rotational energy.
     for (auto i : range1(N)) {
@@ -134,6 +135,8 @@ int main(int argc, char* argv[]) {
         }
     }
     auto H = toMPO(ampo, {"Cutoff", mpo_cutoff});
+    printfln("cputime = %.15e", time.sincemark().time);
+    printfln("walltime = %.15e", time.sincemark().wall);
     printfln("mean MPO bond dimension: %.15e", averageLinkDim(H));
 
     if (geom_nonlinear) {

@@ -39,7 +39,10 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    cpu_time time;
     auto mps2 = embiggen(sites1, mps1, sites2);
+    printfln("cputime = %.15e", time.sincemark().time);
+    printfln("walltime = %.15e", time.sincemark().wall);
 
     writeToFile(mps2_out_path, mps2);
 

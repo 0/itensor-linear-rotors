@@ -58,7 +58,10 @@ int main(int argc, char* argv[]) {
         psi = readFromFile<MPS>(mps_in_path, sites);
     }
 
+    cpu_time time;
     dmrg_sweep(psi, H, sweep_table, num_sweeps, skip_sweeps, ortho_wfs, mps_cutoff);
+    printfln("cputime = %.15e", time.sincemark().time);
+    printfln("walltime = %.15e", time.sincemark().wall);
 
     writeToFile(mps_out_path, psi);
 

@@ -27,8 +27,11 @@ int main(int argc, char* argv[]) {
     bool m_sym = args.getBool("m-sym", lp_sym);
     auto sites_out_path = args.getString("sites-out");
 
+    cpu_time time;
     auto sites = LinearRigidRotor(N, {"l_max", l_max, "lp_sym", lp_sym,
                                       "m_sym", m_sym});
+    printfln("cputime = %.15e", time.sincemark().time);
+    printfln("walltime = %.15e", time.sincemark().wall);
 
     writeToFile(sites_out_path, sites);
 

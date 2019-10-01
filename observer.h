@@ -123,8 +123,6 @@ public:
                 itensor::printfln("WARNING: Complex H2 (%.15e)", H2_contraction.cplx().imag());
             } else if (H2_contraction.cplx().real() < 0.0) {
                 itensor::printfln("WARNING: Negative H2 (%.15e)", H2_contraction.cplx().real());
-            } else if (H2_contraction.cplx().real() < energy*energy) {
-                itensor::printfln("WARNING: H2 less than E^2 (%.15e < %.15e)", H2_contraction.cplx().real(), energy*energy);
             }
 
             dH2_ = N*(H2_contraction.cplx().real()/(energy*energy) - 1.0);

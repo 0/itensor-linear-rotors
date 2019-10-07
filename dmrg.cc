@@ -80,6 +80,7 @@ Sweeps make_sweeps(InputGroup& sweep_table, int num_sweeps, int skip_sweeps, Rea
 }
 
 void dmrg_sweep(MPS& psi, MPO const& H, InputGroup& sweep_table, int num_sweeps, int skip_sweeps, std::vector<MPS> ortho_wfs, Real mps_cutoff) {
+    auto psi0 = psi;
     int N = length(psi);
 
     auto sweeps = make_sweeps(sweep_table, num_sweeps, skip_sweeps, mps_cutoff);
@@ -117,6 +118,10 @@ void dmrg_sweep(MPS& psi, MPO const& H, InputGroup& sweep_table, int num_sweeps,
         printfln("Sinf(%04d) = %.15e", i, obs.Sinf(i));
     }
 
+    // Overlap with previous state.
+    printfln("overlap0 = %s", cplx2str(innerC(psi0, psi)));
+
+    // Overlaps with orthogonal states.
     for (auto i : range(ortho_wfs.size())) {
         auto x = innerC(ortho_wfs[i], psi);
         printfln("overlap(%02d) = %s", i, cplx2str(x));

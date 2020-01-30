@@ -7,7 +7,7 @@ An [ITensor](http://itensor.org/) [`SiteSet`](http://itensor.org/docs.cgi?page=c
 
 The `Makefile` assumes that you have the following standard environment variables set:
 
-* `CPATH` should contain the path to ITensor's `include` directory.
+* `CPATH` should contain the path to the ITensor root directory.
 * `LIBRARY_PATH` should contain the path to ITensor's `lib` directory.
 
 Additionally, the options chosen in ITensor's `options.mk` file will determine the values needed in the following environment variables:
@@ -15,6 +15,33 @@ Additionally, the options chosen in ITensor's `options.mk` file will determine t
 * `ITENSOR_CXX` should be set to the compiler used to build ITensor (likely `g++` or `clang++`).
 * `ITENSOR_CXXFLAGS` should be set to the list of compiler flags needed by ITensor (for example, `-std=c++17 -DPLATFORM_openblas`)
 * `ITENSOR_LDLIBS` should be set to the list of libraries to link against (possibly `-litensor -lpthread -lopenblas`).
+
+
+### Linux, GCC, OpenBLAS
+
+Sample configuration for Linux with [GCC](https://gcc.gnu.org/) and [OpenBLAS](https://www.openblas.net/):
+
+```
+export ITENSOR_PATH=...
+export CPATH="${ITENSOR_PATH}:${CPATH}"
+export LIBRARY_PATH="${ITENSOR_PATH}/lib:${LIBRARY_PATH}"
+export ITENSOR_CXX=g++
+export ITENSOR_CXXFLAGS='-std=c++17 -DPLATFORM_openblas -fpermissive -DHAVE_LAPACK_CONFIG_H -DLAPACK_COMPLEX_STRUCTURE'
+export ITENSOR_LDLIBS='-litensor -lpthread -lopenblas'
+```
+
+### macOS, Clang
+
+Sample configuration for macOS with [Clang](https://clang.llvm.org/):
+
+```
+export ITENSOR_PATH=...
+export CPATH="${ITENSOR_PATH}:${CPATH}"
+export LIBRARY_PATH="${ITENSOR_PATH}/lib:${LIBRARY_PATH}"
+export ITENSOR_CXX=clang++
+export ITENSOR_CXXFLAGS='-std=c++17 -DPLATFORM_macos'
+export ITENSOR_LDLIBS='-litensor -framework Accelerate'
+```
 
 
 ## Example workflow

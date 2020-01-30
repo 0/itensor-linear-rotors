@@ -3,6 +3,20 @@
 An [ITensor](http://itensor.org/) [`SiteSet`](http://itensor.org/docs.cgi?page=classes/siteset) for linear rotors.
 
 
+## Configuration
+
+The `Makefile` assumes that you have the following standard environment variables set:
+
+* `CPATH` should contain the path to ITensor's `include` directory.
+* `LIBRARY_PATH` should contain the path to ITensor's `lib` directory.
+
+Additionally, the options chosen in ITensor's `options.mk` file will determine the values needed in the following environment variables:
+
+* `ITENSOR_CXX` should be set to the compiler used to build ITensor (likely `g++` or `clang++`).
+* `ITENSOR_CXXFLAGS` should be set to the list of compiler flags needed by ITensor (for example, `-std=c++17 -DPLATFORM_openblas`)
+* `ITENSOR_LDLIBS` should be set to the list of libraries to link against (possibly `-litensor -lpthread -lopenblas`).
+
+
 ## Example workflow
 
 ### Generate sites and Hamiltonian MPO
